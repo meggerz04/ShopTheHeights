@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>VendorPath by OpenShop</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#fff;--bg2:#f5f5f3;--bg3:#eeede9;--tx:#1a1a1a;--tx2:#6b6b68;--bd:rgba(0,0,0,0.12);--bd2:rgba(0,0,0,0.22);--gr:#1D9E75;--grd:#0F6E56;--grl:#E1F5EE;--r:8px;--rl:12px;--f:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif}
+@media(prefers-color-scheme:dark){:root{--bg:#1c1c1c;--bg2:#262626;--bg3:#2e2e2e;--tx:#f0f0ee;--tx2:#999994;--bd:rgba(255,255,255,0.12);--bd2:rgba(255,255,255,0.22);--grl:#0a3d2a}}
+body{font-family:var(--f);background:var(--bg3);display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+#app{display:flex;flex-direction:column;width:100%;max-width:560px;height:700px;border:.5px solid var(--bd);border-radius:var(--rl);overflow:hidden;background:var(--bg);box-shadow:0 4px 24px rgba(0,0,0,0.08);position:relative}
+#hdr{padding:12px 15px;border-bottom:.5px solid var(--bd);background:var(--bg2);display:flex;align-items:center;gap:9px;flex-shrink:0;z-index:10}
+.hdr-icon{width:29px;height:29px;background:#111;border-radius:var(--r);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.hdr-icon svg{width:22px;height:26px}
+.hdr-text h2{font-size:12.5px;font-weight:600;color:var(--tx)}
+.hdr-text p{font-size:11px;color:var(--tx2)}
+.tabs{display:flex;margin-left:auto;gap:3px;background:var(--bg);border:.5px solid var(--bd);border-radius:var(--r);padding:3px}
+.tab{font-size:12px;font-family:var(--f);padding:5px 12px;border:none;border-radius:6px;cursor:pointer;background:transparent;color:var(--tx2);transition:background .12s,color .12s;font-weight:500;white-space:nowrap}
+.tab.on{background:var(--gr);color:#fff;font-weight:600}
+.tab-cl-wrap{position:relative;flex-shrink:0}
+.cl-notif{position:absolute;top:-3px;right:-3px;width:9px;height:9px;background:#e53e3e;border-radius:50%;border:1.5px solid var(--bg2);display:none}
+.cl-notif.show{display:block}
+@keyframes tab-pulse{0%{box-shadow:0 0 0 0 rgba(29,158,117,.7)}70%{box-shadow:0 0 0 8px rgba(29,158,117,0)}100%{box-shadow:0 0 0 0 rgba(29,158,117,0)}}
+@keyframes tab-bounce{0%,100%{transform:translateY(0)}25%{transform:translateY(-3px)}75%{transform:translateY(-1px)}}
+.tab-cl-pulse{animation:tab-pulse .7s ease-out 3,tab-bounce .5s ease-out 3}
+.cl-nudge{background:var(--grl);border:.5px solid var(--gr);border-radius:var(--r);padding:8px 12px;font-size:12.5px;color:var(--grd);display:flex;align-items:center;gap:8px;cursor:pointer;transition:background .12s;margin-top:2px}
+.cl-nudge:hover{background:#c8eedd}
+.cl-nudge-icon{font-size:16px;flex-shrink:0}
+.cl-nudge-text{flex:1;line-height:1.4}
+.cl-nudge-text strong{display:block;font-weight:600;margin-bottom:1px}
+.cl-nudge-arr{font-size:11px;color:var(--grd);flex-shrink:0}
+.admin-toggle{width:26px;height:26px;background:none;border:.5px solid var(--bd2);border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--tx2);margin-left:4px;flex-shrink:0}
+.admin-toggle:hover{color:var(--tx);border-color:var(--tx2)}
+.admin-toggle.on{background:var(--tx);color:var(--bg);border-color:var(--tx)}
+#chat-p,#cl-p,#admin-p{display:flex;flex-direction:column;flex:1;overflow:hidden}
+.hide{display:none!important}
+#msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+.msg{display:flex;flex-direction:column;max-width:88%}
+.msg.u{align-self:flex-end;align-items:flex-end}
+.msg.b{align-self:flex-start;align-items:flex-start}
+.bub{padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.65;color:var(--tx)}
+.msg.u .bub{background:var(--gr);color:#fff;border-bottom-right-radius:4px}
+.msg.b .bub{background:var(--bg2);border:.5px solid var(--bd);border-bottom-left-radius:4px}
+.bub a{color:var(--grd);text-decoration:underline}.bub a:hover{color:#085041}
+.msg.u .bub a{color:#9FE1CB}
+.bub p{margin:0 0 8px}.bub p:last-child{margin-bottom:0}
+.bub ul,.bub ol{padding-left:18px;margin:6px 0 8px}
+.bub ul:last-child,.bub ol:last-child{margin-bottom:0}
+.bub li{margin-bottom:4px;line-height:1.55}.bub li:last-child{margin-bottom:0}
+.bub strong{font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+.chip{background:var(--bg);border:.5px solid var(--gr);color:var(--grd);font-size:11.5px;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:var(--f);transition:background .12s}
+.chip:hover{background:var(--grl)}
+#inp-area{border-top:.5px solid var(--bd);padding:9px 11px;display:flex;gap:7px;align-items:flex-end;flex-shrink:0}
+#u-inp{flex:1;border:.5px solid var(--bd2);border-radius:18px;padding:7px 13px;font-size:13px;font-family:var(--f);color:var(--tx);background:var(--bg);outline:none;resize:none;line-height:1.4;max-height:80px;overflow-y:auto}
+#u-inp:focus{border-color:var(--gr)}
+#snd{width:32px;height:32px;border-radius:50%;background:var(--gr);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .12s}
+#snd:hover{background:var(--grd)}#snd:disabled{background:var(--bd);cursor:default}
+#snd svg{width:14px;height:14px;fill:#fff}
+.typing{display:flex;gap:4px;padding:10px 13px;background:var(--bg2);border:.5px solid var(--bd);border-radius:14px;border-bottom-left-radius:4px;width:fit-content}
+.dot{width:5px;height:5px;background:var(--tx2);border-radius:50%;animation:bounce 1.1s ease-in-out infinite}
+.dot:nth-child(2){animation-delay:.18s}.dot:nth-child(3){animation-delay:.36s}
+@keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-4px)}}
+#prog-bar{flex-shrink:0;background:var(--bg);border-bottom:.5px solid var(--bd);padding:12px 15px 10px;z-index:5}
+.prog-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.prog-lbl{font-size:12px;font-weight:600;color:var(--tx)}
+.prog-right{display:flex;align-items:baseline;gap:4px}
+.prog-pct{font-size:20px;font-weight:600;color:var(--gr);transition:all .4s cubic-bezier(.34,1.56,.64,1);line-height:1}
+.prog-of{font-size:11px;color:var(--tx2)}
+.prog-track{width:100%;height:10px;background:var(--bg2);border-radius:10px;overflow:hidden}
+.prog-fill{height:100%;border-radius:10px;background:var(--gr);transition:width .55s cubic-bezier(.34,1.56,.64,1);position:relative;overflow:hidden}
+.prog-fill::after{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:rgba(255,255,255,.28);animation:shimmer 2.4s ease-in-out infinite}
+@keyframes shimmer{0%{left:-60%}100%{left:160%}}
+.prog-ms-row{display:flex;justify-content:space-between;margin-top:6px}
+.prog-ms{display:flex;flex-direction:column;align-items:center;gap:2px}
+.prog-ms-dot{width:8px;height:8px;border-radius:50%;background:var(--bd2);transition:background .3s,transform .3s cubic-bezier(.34,1.56,.64,1)}
+.prog-ms-dot.reached{background:var(--gr);transform:scale(1.3)}.prog-ms-dot.done{background:var(--gr)}
+.prog-ms-lbl{font-size:9.5px;color:var(--tx2)}.prog-ms-lbl.reached{color:var(--grd);font-weight:600}
+.prog-msg{font-size:11px;color:var(--grd);text-align:center;margin-top:5px;min-height:15px;font-weight:600}
+#cl-scroll{flex:1;overflow-y:auto;padding:10px 15px 14px}
+.cl-top{display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.cl-title{font-size:13px;font-weight:600;color:var(--tx);flex:1}
+.cl-act{font-size:11px;font-family:var(--f);background:none;border:.5px solid var(--bd2);border-radius:var(--r);padding:4px 9px;cursor:pointer;color:var(--tx2);display:flex;align-items:center;gap:4px;transition:color .12s}
+.cl-act:hover{color:var(--tx)}.cl-act svg{width:11px;height:11px;fill:currentColor}
+.cl-sec{margin-bottom:12px}
+.cl-sec-ttl{font-size:10.5px;font-weight:600;color:var(--grd);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;padding-bottom:4px;border-bottom:.5px solid var(--bd)}
+.cl-item{border-bottom:.5px solid var(--bd);padding:7px 0 4px}.cl-item:last-child{border-bottom:none}
+.cl-row{display:flex;align-items:flex-start;gap:8px;cursor:pointer}
+.cl-row:hover .cl-box{border-color:var(--gr)}
+.cl-box{width:15px;height:15px;border:1.5px solid var(--bd2);border-radius:4px;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;transition:background .15s,border-color .15s}
+.cl-box.chk{background:var(--gr);border-color:var(--gr)}
+.cl-box.pop{animation:pop .35s cubic-bezier(.34,1.56,.64,1)}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.45)}100%{transform:scale(1)}}
+.cl-box.chk::after{content:'';display:block;width:8px;height:4px;border-left:1.5px solid #fff;border-bottom:1.5px solid #fff;transform:rotate(-45deg) translateY(-1px)}
+.cl-lbl{font-size:12.5px;line-height:1.5;color:var(--tx);flex:1}.cl-lbl.done{color:var(--tx2);text-decoration:line-through}
+.cl-acts2{display:flex;margin-top:3px;padding-left:23px}
+.cl-note-btn{font-size:11px;color:var(--tx2);background:none;border:none;cursor:pointer;font-family:var(--f);padding:0}
+.cl-note-btn:hover{color:var(--grd)}
+.cl-note-area{margin-top:4px;padding-left:23px}
+.cl-note-in{width:100%;font-size:12px;font-family:var(--f);border:.5px solid var(--bd2);border-radius:var(--r);padding:5px 8px;color:var(--tx);background:var(--bg);resize:none;min-height:48px;outline:none;line-height:1.5}
+.cl-note-in:focus{border-color:var(--gr)}
+.cl-note-disp{font-size:11.5px;color:var(--tx2);background:var(--bg2);border-radius:var(--r);padding:4px 8px;line-height:1.5;font-style:italic}
+.cl-note-btns{display:flex;gap:5px;margin-top:3px}
+.cl-note-save{font-size:11px;font-family:var(--f);background:var(--gr);color:#fff;border:none;border-radius:var(--r);padding:3px 9px;cursor:pointer}
+.cl-note-save:hover{background:var(--grd)}
+.cl-note-del{font-size:11px;font-family:var(--f);background:none;color:var(--tx2);border:.5px solid var(--bd2);border-radius:var(--r);padding:3px 9px;cursor:pointer}
+.auto-badge{font-size:9.5px;background:var(--grl);color:var(--grd);border-radius:10px;padding:1px 6px;margin-left:5px;font-weight:600}
+.form-link{font-size:9.5px;background:#e8f4fd;color:#1a6fa8;border-radius:10px;padding:1px 7px;margin-left:5px;font-weight:600;text-decoration:none;display:inline-block}
+.form-link:hover{background:#cce5f6;color:#1a6fa8}
+.cl-tip{font-size:11px;color:var(--tx2);padding:3px 0 2px 23px;line-height:1.45;font-style:italic}
+.cl-empty{text-align:center;padding:32px 20px;color:var(--tx2);font-size:13px;line-height:1.6}
+.cl-empty strong{display:block;font-size:14px;font-weight:600;color:var(--tx);margin-bottom:6px}
+.cl-pick{display:flex;align-items:center;padding:9px 0;border-bottom:.5px solid var(--bd);cursor:pointer;font-size:13px;color:var(--tx)}
+.cl-pick:last-child{border-bottom:none}.cl-pick:hover{color:var(--grd)}
+.cl-pick-arr{font-size:11px;color:var(--tx2);margin-left:auto}
+.prereq-prompt{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--grl);border:.5px solid var(--gr);border-radius:var(--r);cursor:pointer;font-size:12px;color:var(--grd);font-weight:500;margin-bottom:10px;transition:background .12s}
+.prereq-prompt:hover{background:#c8eedd}
+.prereq-arrow{font-size:10px;flex-shrink:0;display:inline-block;transition:transform .2s}
+.prereq-arrow.open{transform:rotate(90deg)}
+.prereq-sec{background:var(--bg2);border:.5px solid var(--bd);border-radius:var(--r);padding:6px 10px;margin-bottom:10px}
+.upgrade-gate{position:relative;margin-top:4px}
+.blurred-preview{filter:blur(6px);pointer-events:none;user-select:none;opacity:.55;max-height:100px;overflow:hidden;-webkit-mask-image:linear-gradient(to bottom,black 20%,transparent 100%);mask-image:linear-gradient(to bottom,black 20%,transparent 100%)}
+.upgrade-card{background:var(--bg);border:1px solid rgba(29,158,117,.35);border-radius:var(--rl);padding:18px 16px;margin-top:8px;box-shadow:0 4px 20px rgba(29,158,117,.10)}
+.upgrade-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;color:var(--grd);background:var(--grl);border-radius:20px;padding:2px 9px;margin-bottom:10px;text-transform:uppercase;letter-spacing:.04em}
+.upgrade-hl{font-size:15px;font-weight:700;color:var(--tx);line-height:1.3;margin-bottom:6px}
+.upgrade-tagline{font-size:12px;color:var(--grd);font-weight:600;margin-bottom:8px}
+.upgrade-body{font-size:12px;color:var(--tx2);line-height:1.55;margin-bottom:12px}
+.upgrade-feats{list-style:none;padding:0;margin:0 0 14px;display:grid;grid-template-columns:1fr 1fr;gap:5px 10px}
+.upgrade-feats li{font-size:11.5px;color:var(--tx);display:flex;align-items:flex-start;gap:5px;line-height:1.4}
+.upgrade-feats li::before{content:'✓';color:var(--gr);font-weight:700;flex-shrink:0}
+.upgrade-cta{width:100%;background:var(--gr);color:#fff;border:none;border-radius:var(--r);padding:11px 16px;font-size:13px;font-weight:600;font-family:var(--f);cursor:pointer;transition:background .15s;letter-spacing:.01em}
+.upgrade-cta:hover{background:var(--grd)}
+.upgrade-sub{font-size:11px;color:var(--tx2);text-align:center;margin-top:7px}
+.admin-auth-wrap{display:flex;align-items:center;justify-content:center;height:100%;padding:20px}
+.admin-auth-box{background:var(--bg);border:.5px solid var(--bd);border-radius:var(--rl);padding:24px 20px;width:100%;max-width:280px;text-align:center}
+.admin-auth-icon{font-size:28px;margin-bottom:10px}
+.admin-auth-ttl{font-size:14px;font-weight:600;color:var(--tx);margin-bottom:4px}
+.admin-auth-sub{font-size:12px;color:var(--tx2);margin-bottom:14px;line-height:1.5}
+.admin-auth-in{width:100%;border:.5px solid var(--bd2);border-radius:var(--r);padding:8px 12px;font-size:13px;font-family:var(--f);color:var(--tx);background:var(--bg);outline:none;text-align:center}
+.admin-auth-in:focus{border-color:var(--gr)}
+.admin-pw-err{font-size:11px;color:#e53e3e;margin-top:6px;min-height:16px}
+.admin-auth-btn{width:100%;background:var(--tx);color:var(--bg);border:none;border-radius:var(--r);padding:10px;font-size:13px;font-weight:600;font-family:var(--f);cursor:pointer;margin-top:10px}
+.admin-auth-btn:hover{opacity:.85}
+.admin-hdr{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:.5px solid var(--bd);flex-shrink:0}
+.admin-hdr-title{font-size:13px;font-weight:600;color:var(--tx)}
+.admin-hdr-btns{display:flex;gap:6px;align-items:center}
+.export-btn{font-size:11px;font-family:var(--f);background:var(--tx);color:var(--bg);border:none;border-radius:var(--r);padding:4px 10px;cursor:pointer;font-weight:500;transition:opacity .12s}
+.export-btn:hover{opacity:.8}
+.export-btn:disabled{opacity:.4;cursor:default}
+.admin-lock{font-size:11px;font-family:var(--f);background:none;border:.5px solid var(--bd2);border-radius:var(--r);padding:4px 9px;cursor:pointer;color:var(--tx2)}
+.admin-lock:hover{color:var(--tx)}
+.admin-subtabs-bar{padding:8px 14px;border-bottom:.5px solid var(--bd);flex-shrink:0}
+.admin-sub-tabs{display:flex;gap:3px;background:var(--bg2);border:.5px solid var(--bd);border-radius:var(--r);padding:2px}
+.admin-sub-tab{flex:1;font-size:11px;font-family:var(--f);padding:4px 6px;border:none;border-radius:6px;cursor:pointer;background:transparent;color:var(--tx2);transition:background .12s,color .12s;white-space:nowrap}
+.admin-sub-tab.on{background:var(--bg);color:var(--tx);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+#admin-content{flex:1;overflow-y:auto;padding:14px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:18px}
+.stat-card{background:var(--bg2);border:.5px solid var(--bd);border-radius:var(--r);padding:11px 12px;text-align:center}
+.stat-val{font-size:20px;font-weight:700;color:var(--gr);line-height:1;margin-bottom:3px}
+.stat-lbl{font-size:10px;color:var(--tx2);font-weight:500;line-height:1.3}
+.chart-sec{margin-bottom:18px}
+.chart-ttl{font-size:10.5px;font-weight:600;color:var(--grd);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;padding-bottom:5px;border-bottom:.5px solid var(--bd)}
+.chart-note{font-size:10px;color:var(--tx2);font-style:italic;margin-bottom:6px}
+.bar-row{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.bar-lbl{font-size:11px;color:var(--tx);width:108px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-track{flex:1;height:7px;background:var(--bg2);border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;background:var(--gr);border-radius:4px;transition:width .4s ease}
+.bar-fill-b{height:100%;background:#60C4A8;border-radius:4px}
+.bar-val{font-size:10.5px;color:var(--tx2);min-width:54px;text-align:right;flex-shrink:0}
+.bar-empty{font-size:12px;color:var(--tx2);padding:6px 0;font-style:italic}
+.sess-item{border:.5px solid var(--bd);border-radius:var(--r);padding:9px 12px;margin-bottom:6px}
+.sess-r1{display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap}
+.sess-date{font-size:12px;color:var(--tx);font-weight:500}
+.new-badge{font-size:9.5px;background:var(--grl);color:var(--grd);border-radius:10px;padding:1px 6px;font-weight:600}
+.paid-badge{font-size:9.5px;background:#e6f4ea;color:#276749;border-radius:10px;padding:1px 6px;font-weight:600}
+.pw-badge{font-size:9.5px;background:#fff8e1;color:#7c5c00;border-radius:10px;padding:1px 6px;font-weight:600}
+.cl-badge{font-size:9.5px;background:var(--bg2);color:var(--tx2);border-radius:10px;padding:1px 6px;border:.5px solid var(--bd)}
+.sess-r2{display:flex;gap:10px;font-size:11px;color:var(--tx2);flex-wrap:wrap}
+.q-item{border:.5px solid var(--bd);border-radius:var(--r);padding:10px 12px;margin-bottom:6px}
+.q-date{font-size:10.5px;color:var(--tx2);margin-bottom:4px}
+.q-text{font-size:12.5px;color:var(--tx);line-height:1.5}
+.admin-footer{margin-top:16px;padding-top:12px;border-top:.5px solid var(--bd);display:flex;gap:8px}
+.admin-btn-sm{flex:1;font-size:11px;font-family:var(--f);background:none;border:.5px solid var(--bd2);border-radius:var(--r);padding:6px;cursor:pointer;color:var(--tx2)}
+.admin-btn-sm:hover{color:var(--tx)}
+.admin-btn-danger{color:#e53e3e!important;border-color:rgba(229,62,62,.4)!important}
+.admin-btn-danger:hover{background:rgba(229,62,62,.06)!important}
+.admin-empty{text-align:center;padding:32px 20px;color:var(--tx2);font-size:13px}
+.confetti-c{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:20;border-radius:var(--rl)}
+.em-wrap{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;z-index:30;border-radius:var(--rl)}
+.em-inner{background:var(--bg);border-radius:var(--rl);padding:20px;width:290px;border:.5px solid var(--bd)}
+.em-ttl{font-size:13.5px;font-weight:600;color:var(--tx);margin-bottom:5px}
+.em-sub{font-size:12px;color:var(--tx2);margin-bottom:11px;line-height:1.5}
+.em-in{width:100%;border:.5px solid var(--bd2);border-radius:var(--r);padding:7px 10px;font-size:13px;font-family:var(--f);color:var(--tx);background:var(--bg);outline:none}
+.em-in:focus{border-color:var(--gr)}
+.em-acts{display:flex;gap:7px;margin-top:11px;justify-content:flex-end}
+.em-cancel{font-size:12px;font-family:var(--f);background:none;border:.5px solid var(--bd2);border-radius:var(--r);padding:5px 12px;cursor:pointer;color:var(--tx2)}
+.em-send{font-size:12px;font-family:var(--f);background:var(--gr);color:#fff;border:none;border-radius:var(--r);padding:5px 12px;cursor:pointer}
+.em-send:hover{background:var(--grd)}
+.em-msg{font-size:12px;color:var(--grd);margin-top:7px}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="hdr">
+    <div class="hdr-icon">
+      <svg viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
+        <path d="M50 4 C25 4 6 23 6 48 C6 72 50 116 50 116 C50 116 94 72 94 48 C94 23 75 4 50 4Z" fill="none" stroke="white" stroke-width="8"/>
+        <circle cx="50" cy="44" r="18" fill="none" stroke="white" stroke-width="7"/>
+        <circle cx="50" cy="44" r="8" fill="white"/>
+        <line x1="52" y1="70" x2="72" y2="58" stroke="white" stroke-width="6" stroke-linecap="round"/>
+        <polyline points="38,80 50,96 62,80" fill="none" stroke="white" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="hdr-text"><h2>Vendor<span style="color:var(--gr)">Path</span></h2><p>by OpenShop</p></div>
+    <div class="tabs">
+      <button class="tab on" id="tab-chat" onclick="switchTab('chat')">💬 Chat</button>
+      <div class="tab-cl-wrap">
+        <button class="tab" id="tab-cl" onclick="switchTab('cl')">✅ My Checklist</button>
+        <div class="cl-notif" id="cl-notif"></div>
+      </div>
+    </div>
+    <button class="admin-toggle" id="admin-toggle" onclick="switchTab('admin')" title="Admin">⚙</button>
+  </div>
+  <div id="chat-p">
+    <div id="msgs"></div>
+    <div id="inp-area">
+      <textarea id="u-inp" placeholder="Ask anything about becoming a vendor..." rows="1"></textarea>
+      <button id="snd"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
+    </div>
+  </div>
+  <div id="cl-p" class="hide">
+    <div id="prog-bar"></div>
+    <div id="cl-scroll"></div>
+  </div>
+  <div id="admin-p" class="hide"></div>
+  <canvas class="confetti-c" id="conf-c"></canvas>
+  <div id="modal-wrap"></div>
+</div>
+<script>
+// ── CONFIG ─────────────────────────────────────────────────────────────────
+const STRIPE_LINK    = 'https://buy.stripe.com/00w3cp09fcKI8ZqgLz9R601';
+const ADMIN_PASS     = '260Griffith!';
+const FEEDBACK_EMAIL = 'shoptheheightsjc@gmail.com';
+const HHS_URL        = 'https://www.jerseycitynj.gov/cityhall/health';
+const MVF_PDF        = 'https://cdnsm5-hosted.civiclive.com/UserFiles/Servers/Server_6189660/File/City%20Hall/Human%20Health%20and%20Services/ENVIRONMENTAL/2026/2025%20Mobile%20Food%20Vendor.pdf';
+const LIC_PDF        = 'https://cdnsm5-hosted.civiclive.com/UserFiles/Servers/Server_6189660/File/City%20Hall/Human%20Health%20and%20Services/ENVIRONMENTAL/2025/2025_08_01_HEALTH%20LICENSE%20PRICES%20UPDATED%20(2).pdf';
+
+const _usp = new URLSearchParams(window.location.search);
+const justPaid = _usp.get('unlocked') === 'true';
+let isUnlocked = justPaid || localStorage.getItem('os_paid') === '1';
+if (justPaid) { try { localStorage.setItem('os_paid','1'); } catch(e){} }
+const API_ENDPOINT = window.storage ? 'https://api.anthropic.com/v1/messages' : '/api/chat';
+
+// ── STORAGE ────────────────────────────────────────────────────────────────
+const store = {
+  async get(k,sh=false){if(window.storage)return window.storage.get(k,sh);const v=localStorage.getItem(k);if(v==null)throw new Error('not found');return{value:v};},
+  async set(k,v,sh=false){if(window.storage)return window.storage.set(k,v,sh);try{localStorage.setItem(k,String(v));}catch(e){}return{key:k,value:v};},
+  async delete(k,sh=false){if(window.storage)return window.storage.delete(k,sh);localStorage.removeItem(k);return{key:k,deleted:true};}
+};
+
+// ── STATE ──────────────────────────────────────────────────────────────────
+let checks={},notes={},openNotes={},activeCL=null,autoCks=new Set(),lastPct=0,busy=false,history=[];
+let pendingFeedback=false,expandedPrereqs={},demographicsAsked=false;
+let researchAsked=false,researchState=null;
+
+let adminAuth=false,adminSubTab='overview';
+const DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+function getReferrer(){const utm=new URLSearchParams(window.location.search).get('utm_source');if(utm)return utm;const ref=document.referrer;if(!ref)return'Direct';try{const u=new URL(ref);return u.hostname.replace(/^www\./,'');}catch{return ref.slice(0,50);}}
+
+let sessionData={id:'s_'+Math.random().toString(36).slice(2,9),userId:null,isNewUser:false,startTime:Date.now(),exchanges:0,totalMsgs:0,checklistType:null,stepsCompleted:0,paywallViewed:false,paymentCompleted:false,gender:null,age:null,locationReported:null,city:null,region:null,country:null,referrer:getReferrer(),utmSource:_usp.get('utm_source')||null,dayOfWeek:DAYS[new Date().getDay()],researchQ1:null,researchQ2:null};
+
+// ── STORAGE FNS ────────────────────────────────────────────────────────────
+async function loadSessions(){try{const r=await store.get('os_sessions',true);return JSON.parse(r.value);}catch{return[];}}
+async function loadUsers(){try{const r=await store.get('os_users',true);return JSON.parse(r.value);}catch{return {};}}
+async function loadFeedback(){try{const r=await store.get('os_feedback',true);return JSON.parse(r.value);}catch{return[];}}
+function countChecks(){return Object.values(checks).filter(Boolean).length;}
+async function updateStoredSession(){try{sessionData.stepsCompleted=countChecks();const ss=await loadSessions();const idx=ss.findIndex(s=>s.id===sessionData.id);const cur={...sessionData,durationMs:Date.now()-sessionData.startTime,ts:Date.now()};if(idx>=0)ss[idx]=cur;else{ss.push(cur);if(ss.length>300)ss.splice(0,ss.length-300);}await store.set('os_sessions',JSON.stringify(ss),true);}catch{}}
+async function storeFeedbackQuestion(q){try{const fb=await loadFeedback();fb.push({question:q.slice(0,600),sessionId:sessionData.id,ts:Date.now()});if(fb.length>300)fb.splice(0,fb.length-300);await store.set('os_feedback',JSON.stringify(fb),true);}catch{}}
+async function getGeoLocation(){try{const r=await fetch('https://ipapi.co/json/');const d=await r.json();if(d.city){sessionData.city=d.city;sessionData.region=d.region||null;sessionData.country=d.country_name||null;updateStoredSession();}}catch{}}
+async function initSession(){try{let uid;try{const r=await store.get('os_uid');uid=r.value;}catch{uid='u_'+Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-4);try{await store.set('os_uid',uid);}catch{}}sessionData.userId=uid;const users=await loadUsers();sessionData.isNewUser=!users[uid];users[uid]={firstSeen:users[uid]?.firstSeen||Date.now(),sessionCount:(users[uid]?.sessionCount||0)+1,lastSeen:Date.now()};await store.set('os_users',JSON.stringify(users),true);await updateStoredSession();}catch{}}
+
+// ── CONTEXT PERSISTENCE ────────────────────────────────────────────────────
+function saveChatContext(){try{localStorage.setItem('os_ctx',JSON.stringify({history:history.slice(-40),activeCL,checks,notes,autoCks:[...autoCks]}));}catch(e){}}
+function loadChatContext(){try{const s=JSON.parse(localStorage.getItem('os_ctx')||'null');if(!s)return false;if(s.history?.length)history=s.history;if(s.activeCL){activeCL=s.activeCL;lastPct=0;}if(s.checks)checks=s.checks;if(s.notes)notes=s.notes;if(s.autoCks)autoCks=new Set(s.autoCks);return true;}catch(e){return false;}}
+
+// ── FORM BADGES ────────────────────────────────────────────────────────────
+const FL  = '<a class="form-link" href="'+MVF_PDF+'" target="_blank" rel="noopener">↓ Download forms</a>';
+const TVF = '<a class="form-link" href="#" onclick="event.stopPropagation();event.preventDefault();openTempVendorForm()">↓ Download form</a>';
+const SOP = '<a class="form-link" href="https://www.cognitoforms.com/CityOfJerseyCity1/VendorsStandardOperatingProcedures" target="_blank" rel="noopener">↓ Open form</a>';
+const VF  = '<a class="form-link" href="https://www.cognitoforms.com/CityOfJerseyCity1/VENDORFORM" target="_blank" rel="noopener">↓ Open form</a>';
+
+// ── CHECKLISTS ─────────────────────────────────────────────────────────────
+const CL={
+  food_general:{label:"Food Vendor — General",sections:[
+    {title:"1. Find your market",items:[{id:"fm1",text:"Research available Jersey City farmers markets"},{id:"fm2",text:"Contact your chosen market sponsor to apply as a vendor"},{id:"fm3",text:"Confirm you've been approved and added to the vendor list"}]},
+    {title:"2. Complete required HHS forms",items:[
+      {id:"fg_sop",text:"Complete the Standard Operating Procedure Agreement "+SOP},
+      {id:"fg_vf",text:"Complete the VENDOR FORM "+VF,tip:"Enter 1–2 tables, even if you plan to bring more. Farm vendors: enter your peak table count."},
+      {id:"fd9",text:"Complete the Temporary Food Vendor Application form — print, complete, and bring in person "+TVF}
+    ]},
+    {title:"3. Gather your documents",items:[{id:"fd1",text:"Current Health Dept. license for your commercial kitchen, valid through the event date"},{id:"fd2",text:"Most recent kitchen health inspection report"},{id:"fd3",text:"Valid driver's license or state-issued ID (non-expired)"},{id:"fd4",text:"NJ Certificate of Authority (required even if business is out of state)"},{id:"fd5",text:"Federal Tax ID or Social Security card (if not incorporated)"},{id:"fd6",text:"Invoice from your food source (last event receipt OK for pre-packaged / day-of buyers)"},{id:"fd7",text:"Food Protection Certificate or ServSafe cert — at least one required; bring as many from your team as possible"},{id:"fd8",text:"Proof of $500,000 business liability insurance"}]},
+    {title:"4. Apply for your permit",items:[{id:"fg_fire",text:"If cooking on-site (grill, oven, fryer, flat iron, electrical grill) with propane, charcoal, wood, or sternos: obtain a Type 1 Permit from JC Fire Prevention — (201) 547-4255 "+FL},{id:"fp1",text:"Print all documents (no email or cell phone submissions accepted)"},{id:"fp2",text:"Visit JC Bureau of Licensing: 1 Jackson Square, Jersey City, NJ 07305 — you may send a representative with paperwork and payment"},{id:"fp3",text:"Pay permit fee — cash, debit, or credit card only. Cannot obtain permit day-of-event."},{id:"fp4",text:"Receive your Temporary Food Vendor Permit (separate from your Commercial Kitchen License)"}]},
+    {title:"5. At the market",items:[{id:"fat1",text:"Display your permit in a visible location at your booth"},{id:"fat2",text:"Ensure at least one employee has a valid food handler certificate on site"},{id:"fat3",text:"If accepting SNAP/EBT or WIC benefits, post a sign at your booth"}]}
+  ]},
+  food_cottage:{label:"Cottage Food Vendor",sections:[
+    {title:"1. Find your market",items:[{id:"cfm1",text:"Research available Jersey City farmers markets"},{id:"cfm2",text:"Contact your chosen market sponsor to apply as a vendor"},{id:"cfm3",text:"Confirm you've been approved and added to the vendor list"}]},
+    {title:"2. Get your NJ Cottage Food License",items:[{id:"cfl1",text:"Complete the NJ Cottage Food License application"},{id:"cfl2",text:"Prepare a Product Questionnaire for each product, frosting, and filling"},{id:"cfl3",text:"Gather proof of water potability (well water report or recent water bill)"},{id:"cfl4",text:"Obtain a Food Manager's Certificate"},{id:"cfl5",text:"Email application + docs to cfo@doh.nj.gov"},{id:"cfl6",text:"Pay $100 state application fee"},{id:"cfl7",text:"Receive NJ Cottage Food License"}]},
+    {title:"3. Complete required HHS forms",items:[
+      {id:"cf_sop",text:"Complete the Standard Operating Procedure Agreement "+SOP},
+      {id:"cf_vf",text:"Complete the VENDOR FORM "+VF,tip:"Enter 1–2 tables, even if you plan to bring more. Farm vendors: enter your peak table count."},
+      {id:"cfp1",text:"Complete the Temporary Food Vendor Application form — print, complete, and bring in person "+TVF}
+    ]},
+    {title:"4. Apply for your JC vendor permit",items:[{id:"cf_fire",text:"If cooking on-site (grill, flat iron, fryer) with propane, charcoal, wood, or sternos: obtain a Type 1 Permit from JC Fire Prevention — (201) 547-4255 "+FL},{id:"cfp2",text:"Print all documents (no email or cell phone submissions accepted)"},{id:"cfp3",text:"Visit JC Bureau of Licensing: 1 Jackson Square, Jersey City, NJ 07305 — you may send a representative"},{id:"cfp4",text:"Pay permit fee — cash, debit, or credit card only. Cannot obtain permit day-of-event."}]},
+    {title:"5. At the market",items:[{id:"cfat1",text:"Display your permit in a visible location at your booth"},{id:"cfat2",text:"Ensure at least one employee has a valid food handler certificate on site"}]}
+  ]},
+  food_truck:{label:"Food Truck Vendor",sections:[
+    {title:"1. Find your market",items:[{id:"ftm1",text:"Research available Jersey City farmers markets"},{id:"ftm2",text:"Contact your chosen market sponsor to apply as a vendor"},{id:"ftm3",text:"Confirm you've been approved and added to the vendor list"}]},
+    {title:"2. Get your Fire Department Certificate first",items:[
+      {id:"ftf1",text:"Contact JC Fire Department: 2 Jackson Square, (201) 547-4255 — required BEFORE your health permit. Apply for Type 1 / Type 1-A / Open Flame Permit as applicable "+FL,tip:"Jersey City Fire Department does not issue permits for Liberty State Park, Lincoln Park, or Washington Park. Please reach out to the event organizer for further instructions for State and County Parks located within Jersey City."},
+      {id:"ftf2",text:"Obtain Fire Department Certificate"}
+    ]},
+    {title:"3. Complete required HHS forms",items:[
+      {id:"ft_sop",text:"Complete the Standard Operating Procedure Agreement "+SOP},
+      {id:"ft_vf",text:"Complete the VENDOR FORM "+VF,tip:"Enter 1–2 tables, even if you plan to bring more. Farm vendors: enter your peak table count."},
+      {id:"ftd_mvf",text:"Complete the Food Truck/Trailer/Pushcart Application form — annual JC mobile food vendor license, Class A fee: $840/year "+FL},
+      {id:"ftd12",text:"Complete the Temporary Food Vendor Application form for each farmers market event — print, complete, and bring in person "+TVF}
+    ]},
+    {title:"4. Gather your documents",items:[{id:"ftd1",text:"Current Health Dept. license for your kitchen/commissary, valid through event date"},{id:"ftd2",text:"Most recent kitchen health inspection report"},{id:"ftd3",text:"Valid driver's license or state-issued ID (non-expired)"},{id:"ftd4",text:"NJ Certificate of Authority"},{id:"ftd5",text:"Federal Tax ID or Social Security card"},{id:"ftd6",text:"Invoice from your food source"},{id:"ftd7",text:"Food Protection Certificate or ServSafe cert (at least one employee)"},{id:"ftd8",text:"Proof of $1,000,000 business liability insurance (food trucks require $1M, not $500K)"},{id:"ftd9",text:"Valid vehicle registration (non-expired, must match make, model, and plate)"},{id:"ftd10",text:"Valid vehicle insurance card (non-expired, must match make, model, and plate)"},{id:"ftd11",text:"Fire Department Certificate"}]},
+    {title:"5. Apply for your health permit",items:[{id:"ftp1",text:"Print all documents (no email or cell phone submissions)"},{id:"ftp2",text:"Visit JC Bureau of Licensing: 1 Jackson Square — you may send a representative"},{id:"ftp3",text:"Pay permit fee — cash, debit, or credit card only. Cannot obtain permit day-of-event."}]},
+    {title:"6. At the market",items:[{id:"ftat1",text:"Display your permit in a visible location"},{id:"ftat2",text:"Ensure at least one employee has a valid food handler certificate on site"}]}
+  ]},
+  raw_meat:{label:"Raw Meat Vendor",sections:[
+    {title:"1. Find your market",items:[{id:"rmm1",text:"Research available Jersey City farmers markets"},{id:"rmm2",text:"Contact your chosen market sponsor to apply as a vendor"},{id:"rmm3",text:"Confirm you've been approved and added to the vendor list"}]},
+    {title:"2. Complete required HHS forms",items:[
+      {id:"rm_sop",text:"Complete the Standard Operating Procedure Agreement "+SOP},
+      {id:"rm_vf",text:"Complete the VENDOR FORM "+VF,tip:"Enter 1–2 tables, even if you plan to bring more. Farm vendors: enter your peak table count."},
+      {id:"rma_app",text:"Complete the Temporary Food Vendor Application form — print, complete, and bring in person "+TVF}
+    ]},
+    {title:"3. Gather standard food vendor documents",items:[{id:"rmd1",text:"Current Health Dept. license for your kitchen, valid through event date"},{id:"rmd2",text:"Most recent kitchen health inspection report"},{id:"rmd3",text:"Valid driver's license or state-issued ID (non-expired)"},{id:"rmd4",text:"NJ Certificate of Authority"},{id:"rmd5",text:"Federal Tax ID or Social Security card"},{id:"rmd6",text:"Invoice from food source"},{id:"rmd7",text:"Food Protection Certificate or ServSafe cert (at least one employee)"},{id:"rmd8",text:"Proof of $500,000 business liability insurance"}]},
+    {title:"4. Gather raw meat-specific documents",items:[{id:"rmx1",text:"USDA Grant of Inspection from your slaughterhouse (submitted to JC HHS annually)"},{id:"rmx2",text:"Most recent invoice from slaughterhouse showing they package the product"},{id:"rmx3",text:"If using a butcher shop: their most recent health inspection report and license"},{id:"rmx4",text:"At least one employee must have a valid food handler certificate"}]},
+    {title:"5. Apply for your permit",items:[{id:"rm_fire",text:"If cooking on-site (grill, fryer, flat iron) with propane, charcoal, wood, or sternos: obtain a Type 1 Permit from JC Fire Prevention — (201) 547-4255 "+FL},{id:"rmp1",text:"Print all documents (no email or cell phone submissions)"},{id:"rmp2",text:"Visit JC Bureau of Licensing: 1 Jackson Square — you may send a representative"},{id:"rmp3",text:"Pay permit fee — cash, debit, or credit card only. Cannot obtain permit day-of-event."}]},
+    {title:"6. At the market",items:[{id:"rmat1",text:"Display your permit in a visible location"},{id:"rmat2",text:"Ensure at least one employee with food handler cert is on site"}]}
+  ]},
+  non_food:{label:"Non-Food Vendor",sections:[
+    {title:"1. Find your market",items:[{id:"nfm1",text:"Research available Jersey City farmers markets"},{id:"nfm2",text:"Contact your chosen market sponsor to apply as a vendor"},{id:"nfm3",text:"Confirm you've been approved and added to the vendor list"}]},
+    {title:"2. Complete required HHS forms",items:[
+      {id:"nf_sop",text:'Complete the Standard Operating Procedure Agreement <a class="form-link" href="https://www.cognitoforms.com/CityOfJerseyCity1/VendorsStandardOperatingProcedures" target="_blank" rel="noopener">↓ Open form</a>'},
+      {id:"nf_vf",text:'Complete the VENDOR FORM <a class="form-link" href="https://www.cognitoforms.com/CityOfJerseyCity1/VENDORFORM" target="_blank" rel="noopener">↓ Open form</a>',tip:"Enter 1–2 tables, even if you plan to bring more. Farm vendors: enter your peak table count."}
+    ]},
+    {title:"3. Complete market requirements",items:[{id:"nfr1",text:"Follow your market sponsor's specific vendor requirements"},{id:"nfr2",text:"Confirm market-specific fees and payment schedule with the sponsor"},{id:"nfr3",text:"Note: If you sell anything ingested by mouth, you need a Temporary Food Vendor Permit"},{id:"nf_fire",text:"If using any heating equipment at your booth (sternos, propane, charcoal): obtain a Type 1 Permit from JC Fire Prevention — (201) 547-4255 "+FL}]},
+    {title:"4. At the market",items:[{id:"nfat1",text:"Display any required market permits or licenses at your booth"},{id:"nfat2",text:"Follow all market rules set by your sponsor"}]}
+  ]}
+};
+const MILESTONES=[25,50,75,100];
+const MS_MSGS={25:"Great start — you're on your way!",50:"Halfway there — keep going!",75:"Almost done — you're so close!",100:"You did it! All steps complete!"};
+
+// ── PROGRESS BAR ───────────────────────────────────────────────────────────
+function updateProg(anim){
+  const el=document.getElementById('prog-bar');
+  if(!activeCL||!isUnlocked){el.innerHTML='';return;}
+  const cl=CL[activeCL];let t=0,d=0;cl.sections.forEach(s=>s.items.forEach(i=>{t++;if(checks[i.id])d++;}));
+  const pct=t>0?Math.round((d/t)*100):0;
+  el.innerHTML='<div class="prog-hdr"><span class="prog-lbl">'+cl.label+'</span><div class="prog-right"><span class="prog-pct" id="pp">'+pct+'%</span><span class="prog-of">'+d+' of '+t+' steps</span></div></div><div class="prog-track"><div class="prog-fill" style="width:'+pct+'%"></div></div><div class="prog-ms-row">'+MILESTONES.map(m=>'<div class="prog-ms"><div class="prog-ms-dot '+(pct>=m?(pct>m?'done':'reached'):'')+'"></div><span class="prog-ms-lbl '+(pct===m?'reached':'')+'">'+m+'%</span></div>').join('')+'</div><div class="prog-msg">'+ [100,75,50,25].reduce((a,m)=>pct>=m&&!a?MS_MSGS[m]:a,'')+'</div>';
+  if(anim&&pct>lastPct){const pp=document.getElementById('pp');if(pp){pp.style.transform='scale(1.25)';pp.style.color='#0F6E56';setTimeout(()=>{pp.style.transform='scale(1)';pp.style.color='';},400);}for(const m of MILESTONES){if(pct>=m&&lastPct<m){launchConfetti();break;}}}
+  lastPct=pct;
+}
+
+function launchConfetti(){const c=document.getElementById('conf-c'),ctx=c.getContext('2d');c.width=c.offsetWidth;c.height=c.offsetHeight;const cols=['#1D9E75','#5DCAA5','#9FE1CB','#E1F5EE','#0F6E56','#FAC775','#fff'];const ps=Array.from({length:65},()=>({x:Math.random()*c.width,y:-20-Math.random()*80,r:Math.random()*5+2,col:cols[Math.floor(Math.random()*cols.length)],tilt:Math.random()*10-5,ta:0,tai:Math.random()*.04+.02,vx:(Math.random()-.5)*1.8,vy:Math.random()*1.4+.8,op:1,sh:Math.random()>.5?'r':'c',fs:c.height*.72}));let fr=0;(function draw(){ctx.clearRect(0,0,c.width,c.height);let any=false;ps.forEach(p=>{if(p.op<=0)return;any=true;ctx.save();ctx.globalAlpha=p.op;ctx.fillStyle=p.col;ctx.translate(p.x,p.y);ctx.rotate(p.tilt*Math.PI/180);p.sh==='r'?ctx.fillRect(-p.r,-p.r/2,p.r*2,p.r):(ctx.beginPath(),ctx.arc(0,0,p.r,0,Math.PI*2),ctx.fill());ctx.restore();p.ta+=p.tai;p.tilt=Math.sin(p.ta)*12;p.x+=p.vx;p.y+=p.vy;p.vy+=.025;if(p.y>p.fs)p.op-=.018;});fr++;if(fr<220&&any)requestAnimationFrame(draw);else ctx.clearRect(0,0,c.width,c.height);})();}
+
+// ── CHECKLIST RENDER ───────────────────────────────────────────────────────
+function renderCL(){
+  const sc=document.getElementById('cl-scroll');
+  if(!activeCL){document.getElementById('prog-bar').innerHTML='';sc.innerHTML='<div class="cl-top"><span class="cl-title">My Checklist</span></div><div class="cl-empty"><strong>No checklist yet</strong>Head to the Chat tab — tell me about your business and I\'ll build your personalized step-by-step plan.</div><div style="margin-top:10px"><div class="cl-sec-ttl" style="padding-bottom:4px;border-bottom:.5px solid var(--bd)">Or choose a type:</div>'+Object.entries(CL).map(([k,cl])=>'<div class="cl-pick" onclick="setCL(\''+k+'\')"><span>'+cl.label+'</span><span class="cl-pick-arr">→</span></div>').join('')+'</div>';return;}
+  updateProg(false);
+  const cl=CL[activeCL];
+  const prereqIdx=activeCL==='food_cottage'?1:-1;
+  const renderedSections=cl.sections.filter((_,i)=>i!==prereqIdx);
+  const freeLimit=Infinity;
+  const isPrereqOpen=!!expandedPrereqs[activeCL];
+  const topbar='<div class="cl-top"><span class="cl-title">'+cl.label+'</span><button class="cl-act" onclick="openEmailModal()"><svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>Email</button><button class="cl-act" onclick="printCL()"><svg viewBox="0 0 24 24"><path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/></svg>Print</button><button class="cl-act" onclick="resetCL()">Change type</button></div>';
+  let prereqHtml='';
+  if(prereqIdx>=0){
+    const ps=cl.sections[prereqIdx];
+    prereqHtml='<div class="prereq-prompt" onclick="togglePrereq(\''+activeCL+'\')"><div style="flex:1;line-height:1.4">If you do not currently hold your NJ Cottage Food License, click here to see those steps.</div><span class="prereq-arrow'+(isPrereqOpen?' open':'')+'">▶</span></div>';
+    if(isPrereqOpen){let ph='<div class="prereq-sec">';ps.items.forEach(item=>{ph+=renderItemHtml(item);});ph+='</div>';prereqHtml+=ph;}
+  }
+  let freeHtml='',seen=0,sectionNum=0;
+  cl.sections.forEach((s,sIdx)=>{
+    if(sIdx===prereqIdx)return;
+    sectionNum++;
+    const title=sectionNum+'. '+s.title.replace(/^\d+\. /,'');
+    let fi='';
+    s.items.forEach(item=>{fi+=renderItemHtml(item);seen++;});
+    if(fi)freeHtml+='<div class="cl-sec"><div class="cl-sec-ttl">'+title+'</div>'+fi+'</div>';
+  });
+  let html=topbar+prereqHtml+freeHtml;
+  sc.innerHTML=html;
+}
+
+function renderItemHtml(item){
+  const chk=!!checks[item.id],isAuto=autoCks.has(item.id),note=notes[item.id]||'',noteOpen=!!openNotes[item.id];
+  const tipHtml=item.tip?'<div class="cl-tip">💡 '+item.tip+'</div>':'';
+  return '<div class="cl-item"><div class="cl-row" onclick="toggleItem(\''+item.id+'\')"><div class="cl-box '+(chk?'chk':'')+'" id="cb-'+item.id+'"></div><div class="cl-lbl '+(chk?'done':'')+'">'+item.text+(isAuto?'<span class="auto-badge">auto</span>':'')+'</div></div>'+tipHtml+'<div class="cl-acts2"><button class="cl-note-btn" onclick="toggleNote(\''+item.id+'\')">'+(note?'Edit note':'+ Add note')+'</button></div>'+(noteOpen?'<div class="cl-note-area"><textarea class="cl-note-in" id="ni-'+item.id+'" placeholder="Add a note...">'+note+'</textarea><div class="cl-note-btns"><button class="cl-note-save" onclick="saveNote(\''+item.id+'\')">Save</button>'+(note?'<button class="cl-note-del" onclick="delNote(\''+item.id+'\')">Remove</button>':'')+'</div></div>':note?'<div class="cl-note-area"><div class="cl-note-disp">'+note+'</div></div>':'')+'</div>';
+}
+
+function toggleItem(id){
+  if(!isUnlocked){const cl=CL[activeCL];const prereqIdx=activeCL==='food_cottage'?1:-1;const renderedSections=cl.sections.filter((_,i)=>i!==prereqIdx);const lim=(renderedSections[0]?.items.length||0)+1;let idx=0,ok=false;outer:for(const s of cl.sections){if(cl.sections.indexOf(s)===prereqIdx)continue;for(const item of s.items){if(item.id===id){ok=idx<lim;break outer;}idx++;}}if(!ok)return;}
+  const was=!!checks[id];checks[id]=!was;if(!checks[id])autoCks.delete(id);
+  const box=document.getElementById('cb-'+id);if(box&&!was){box.classList.add('pop');setTimeout(()=>box.classList.remove('pop'),400);}
+  renderCL();updateProg(true);updateStoredSession();
+}
+function toggleNote(id){openNotes[id]=!openNotes[id];renderCL();if(openNotes[id])setTimeout(()=>{const el=document.getElementById('ni-'+id);if(el)el.focus();},50);}
+function saveNote(id){const el=document.getElementById('ni-'+id);if(el)notes[id]=el.value.trim();openNotes[id]=false;renderCL();}
+function delNote(id){delete notes[id];openNotes[id]=false;renderCL();}
+function togglePrereq(key){expandedPrereqs[key]=!expandedPrereqs[key];renderCL();}
+function setCL(k){activeCL=k;lastPct=0;sessionData.checklistType=k;renderCL();updateProg(false);updateStoredSession();saveChatContext();}
+function resetCL(){activeCL=null;renderCL();}
+function autoCheck(ids){ids.forEach(id=>{checks[id]=true;autoCks.add(id);});}
+function openStripe(){window.open(STRIPE_LINK,'_blank');sessionData.paywallViewed=true;updateStoredSession();}
+function unlockAccess(){isUnlocked=true;try{localStorage.setItem('os_paid','1');}catch(e){}sessionData.paymentCompleted=true;updateStoredSession();renderCL();updateProg(false);}
+
+// ── TAB + NOTIF ────────────────────────────────────────────────────────────
+function pulseChecklistTab(){const tb=document.getElementById('tab-cl');const notif=document.getElementById('cl-notif');if(tb){tb.classList.remove('tab-cl-pulse');void tb.offsetWidth;tb.classList.add('tab-cl-pulse');setTimeout(()=>tb.classList.remove('tab-cl-pulse'),2200);}if(notif)notif.classList.add('show');}
+function clearChecklistNotif(){const notif=document.getElementById('cl-notif');if(notif)notif.classList.remove('show');}
+function switchTab(tab){
+  ['chat','cl'].forEach(t=>{document.getElementById('tab-'+t).classList.toggle('on',t===tab);});
+  document.getElementById('admin-toggle').classList.toggle('on',tab==='admin');
+  document.getElementById('chat-p').classList.toggle('hide',tab!=='chat');
+  document.getElementById('cl-p').classList.toggle('hide',tab!=='cl');
+  document.getElementById('admin-p').classList.toggle('hide',tab!=='admin');
+  if(tab==='cl'){renderCL();updateProg(false);clearChecklistNotif();}
+  if(tab==='admin')renderAdmin();
+}
+
+// ── ADMIN ──────────────────────────────────────────────────────────────────
+function fmtDur(ms){if(!ms||ms<1000)return'<1s';const s=Math.floor(ms/1000);if(s<60)return s+'s';const m=Math.floor(s/60),rs=s%60;return rs>0?m+'m '+rs+'s':m+'m';}
+function fmtTs(ts){if(!ts)return'—';const d=new Date(ts),now=new Date();const t=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});return d.toDateString()===now.toDateString()?'Today '+t:d.toLocaleDateString([],{month:'short',day:'numeric'})+' '+t;}
+function ageGroup(n){const v=parseInt(n);if(isNaN(v)||v<1)return null;if(v<25)return'18–24';if(v<35)return'25–34';if(v<45)return'35–44';if(v<55)return'45–54';return'55+';}
+function checkAdminPw(){const pw=document.getElementById('admin-pw-in')?.value||'';if(pw===ADMIN_PASS){adminAuth=true;renderAdmin();}else{const e=document.getElementById('admin-pw-err');if(e)e.textContent='Incorrect password.';}}
+function lockAdmin(){adminAuth=false;switchTab('chat');}
+function setAdminSubTab(tab){adminSubTab=tab;renderAdmin();}
+function renderBars(dataObj,denominator,alt){const entries=Object.entries(dataObj).sort((a,b)=>b[1]-a[1]).slice(0,7);if(!entries.length)return'<div class="bar-empty">No data yet</div>';const max=entries[0][1];return entries.map(([lbl,cnt])=>{const pct=denominator>0?Math.round(cnt/denominator*100):0;const w=Math.round(cnt/max*100);return'<div class="bar-row"><span class="bar-lbl" title="'+lbl+'">'+lbl+'</span><div class="bar-track"><div class="'+(alt?'bar-fill-b':'bar-fill')+'" style="width:'+w+'%"></div></div><span class="bar-val">'+cnt+' · '+pct+'%</span></div>';}).join('');}
+
+function buildAdminOverview(sessions,users){
+  const total=sessions.length;
+  const newU=sessions.filter(s=>s.isNewUser).length;
+  const pwViews=sessions.filter(s=>s.paywallViewed).length;
+  const paid=sessions.filter(s=>s.paymentCompleted).length;
+  const overallConv=total>0?Math.round(paid/total*100):0;
+  const pwConv=pwViews>0?Math.round(paid/pwViews*100):0;
+  const avgDur=total>0?sessions.reduce((a,s)=>a+(s.durationMs||0),0)/total:0;
+  const clSess=sessions.filter(s=>s.checklistType&&(s.stepsCompleted||0)>0);
+  const avgSteps=clSess.length>0?(clSess.reduce((a,s)=>a+(s.stepsCompleted||0),0)/clSess.length).toFixed(1):0;
+  const returning=sessions.filter(s=>!s.isNewUser).length;
+  const uVals=Object.values(users);
+  const returnUsers=uVals.filter(u=>u.sessionCount>1).length;
+  const totalUsers=uVals.length;
+  const bizMap={};sessions.forEach(s=>{if(s.checklistType){const lbl=CL[s.checklistType]?.label||s.checklistType;bizMap[lbl]=(bizMap[lbl]||0)+1;}});
+  const dayOrder=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];const dayMap={};sessions.forEach(s=>{if(s.dayOfWeek)dayMap[s.dayOfWeek]=(dayMap[s.dayOfWeek]||0)+1;});const orderedDays={};dayOrder.forEach(d=>{if(dayMap[d])orderedDays[d]=dayMap[d];});
+  const demSess=sessions.filter(s=>s.gender||s.age||s.locationReported);const demN=demSess.length;
+  const gMap={};sessions.forEach(s=>{if(s.gender){const g=s.gender.charAt(0).toUpperCase()+s.gender.slice(1);gMap[g]=(gMap[g]||0)+1;}});const gTotal=Object.values(gMap).reduce((a,b)=>a+b,0);
+  const ageOrder=['18–24','25–34','35–44','45–54','55+'];const ageMap={};sessions.forEach(s=>{if(s.age){const g=ageGroup(s.age);if(g)ageMap[g]=(ageMap[g]||0)+1;}});const ageTotal=Object.values(ageMap).reduce((a,b)=>a+b,0);const orderedAges={};ageOrder.forEach(a=>{if(ageMap[a])orderedAges[a]=ageMap[a];});
+  const cityMap={};sessions.forEach(s=>{const loc=s.locationReported||(s.city?(s.region?s.city+', '+s.region:s.city):null);if(loc)cityMap[loc]=(cityMap[loc]||0)+1;});
+  const refMap={};sessions.forEach(s=>{const r=s.utmSource||s.referrer||'Direct';refMap[r]=(refMap[r]||0)+1;});
+  let html='<div class="stat-grid">';
+  html+='<div class="stat-card"><div class="stat-val">'+total+'</div><div class="stat-lbl">Total Sessions</div></div>';
+  html+='<div class="stat-card"><div class="stat-val">'+newU+'</div><div class="stat-lbl">New User Sessions</div></div>';
+  html+='<div class="stat-card"><div class="stat-val">'+pwViews+'</div><div class="stat-lbl">Entered Paywall</div></div>';
+  html+='<div class="stat-card"><div class="stat-val">'+paid+'</div><div class="stat-lbl">Payments</div></div>';
+  html+='<div class="stat-card"><div class="stat-val">'+overallConv+'%</div><div class="stat-lbl">Overall Conversion</div></div>';
+  html+='<div class="stat-card"><div class="stat-val">'+pwConv+'%</div><div class="stat-lbl">Paywall → Paid</div></div>';
+  html+='<div class="stat-card"><div class="stat-val">'+fmtDur(avgDur)+'</div><div class="stat-lbl">Avg Session Time</div></div>';
+  html+='<div class="stat-card"><div class="stat-val">'+avgSteps+'</div><div class="stat-lbl">Avg Steps Done</div></div>';
+  html+='</div>';
+  html+='<div class="chart-sec"><div class="chart-ttl">Business Type</div>'+(Object.keys(bizMap).length?renderBars(bizMap,total):'<div class="bar-empty">No checklist sessions yet</div>')+'</div>';
+  html+='<div class="chart-sec"><div class="chart-ttl">Day of Week</div>'+(Object.keys(orderedDays).length?renderBars(orderedDays,total):'<div class="bar-empty">No data yet</div>')+'</div>';
+  html+='<div class="chart-sec"><div class="chart-ttl">New vs. Returning</div><div class="bar-row"><span class="bar-lbl">New visitors</span><div class="bar-track"><div class="bar-fill" style="width:'+(total>0?Math.round(newU/total*100):0)+'%"></div></div><span class="bar-val">'+newU+'</span></div><div class="bar-row"><span class="bar-lbl">Returning</span><div class="bar-track"><div class="bar-fill-b" style="width:'+(total>0?Math.round(returning/total*100):0)+'%"></div></div><span class="bar-val">'+returning+'</span></div><div class="bar-row" style="margin-top:3px"><span class="bar-lbl" style="color:var(--tx2);font-size:10.5px">Users w/ 2+ sessions</span><div class="bar-track"><div class="bar-fill" style="width:'+(totalUsers>0?Math.round(returnUsers/totalUsers*100):0)+'%"></div></div><span class="bar-val">'+returnUsers+' / '+totalUsers+'</span></div></div>';
+  if(Object.keys(cityMap).length)html+='<div class="chart-sec"><div class="chart-ttl">Locations</div><div class="chart-note">Self-reported when available, otherwise IP-based</div>'+renderBars(cityMap,total)+'</div>';
+  if(Object.keys(refMap).length)html+='<div class="chart-sec"><div class="chart-ttl">Referrer Sources</div>'+renderBars(refMap,total,true)+'</div>';
+  html+='<div class="chart-sec"><div class="chart-ttl">Demographics <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--tx2)">(self-reported, n='+demN+')</span></div>';
+  if(demN===0){html+='<div class="bar-empty">No responses yet — the optional demographics question is asked after several exchanges.</div>';}
+  else{if(gTotal>0)html+='<div style="margin-bottom:10px"><div style="font-size:10px;font-weight:600;color:var(--tx2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.03em">Gender</div>'+renderBars(gMap,gTotal)+'</div>';if(ageTotal>0)html+='<div style="margin-bottom:10px"><div style="font-size:10px;font-weight:600;color:var(--tx2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.03em">Age Range</div>'+renderBars(orderedAges,ageTotal)+'</div>';}
+  html+='</div>';
+  // Research results
+  var rQ1Map={};sessions.forEach(function(s){if(s.researchQ1)rQ1Map[s.researchQ1]=(rQ1Map[s.researchQ1]||0)+1;});
+  var rQ2Map={};sessions.forEach(function(s){if(s.researchQ2)rQ2Map[s.researchQ2]=(rQ2Map[s.researchQ2]||0)+1;});
+  var rN=sessions.filter(function(s){return s.researchQ1;}).length;
+  var rYes=(rQ1Map['Yes, definitely']||0)+(rQ1Map['Probably, depending on the price']||0);
+  var priceOrder=["$25–$50 per month","$50–$75 per month","$75–$100 per month","$100+ per month","I would only use it if it were free"];
+  var orderedQ2={};priceOrder.forEach(function(k){if(rQ2Map[k])orderedQ2[k]=rQ2Map[k];});
+  var researchHtml=rN===0?'':'<div class="chart-sec"><div class="chart-ttl">Research — Brick &amp; Mortar Interest <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--tx2)">(n='+rN+')</span></div>'+renderBars(rQ1Map,rN)+(rYes>0&&Object.keys(orderedQ2).length?'<div style="margin-top:10px"><div style="font-size:10px;font-weight:600;color:var(--tx2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.03em">Willingness to Pay (among Yes/Probably, n='+rYes+')</div>'+renderBars(orderedQ2,rYes)+'</div>':'')+'</div>';
+
+  html+=researchHtml;
+  return html;
+}
+
+function buildSessionsList(sessions){if(!sessions.length)return'<div class="admin-empty">No sessions recorded yet.</div>';return sessions.slice().reverse().map(s=>'<div class="sess-item"><div class="sess-r1"><span class="sess-date">'+fmtTs(s.ts||s.startTime)+'</span>'+(s.isNewUser?'<span class="new-badge">New</span>':'')+(s.paymentCompleted?'<span class="paid-badge">Paid</span>':s.paywallViewed?'<span class="pw-badge">Paywall</span>':'')+(s.checklistType&&CL[s.checklistType]?'<span class="cl-badge">'+CL[s.checklistType].label+'</span>':'')+'</div><div class="sess-r2"><span>⏱ '+fmtDur(s.durationMs)+'</span><span>💬 '+(s.exchanges||0)+' Q&As</span><span>✅ '+(s.stepsCompleted||0)+' steps</span>'+((s.locationReported||s.city)?'<span>📍 '+(s.locationReported||s.city)+'</span>':'')+'</div></div>').join('')+'<div class="admin-footer"><button class="admin-btn-sm admin-btn-danger" onclick="clearData(\'os_sessions\')">Clear session data</button></div>';}
+function buildQuestionsList(fb){if(!fb.length)return'<div class="admin-empty">No submitted questions yet.</div>';return fb.slice().reverse().map(q=>'<div class="q-item"><div class="q-date">'+fmtTs(q.ts)+'</div><div class="q-text">'+((q.question||'').replace(/</g,'&lt;'))+'</div></div>').join('')+'<div class="admin-footer"><button class="admin-btn-sm admin-btn-danger" onclick="clearData(\'os_feedback\')">Clear questions</button></div>';}
+async function clearData(key){if(!confirm('Clear this data? Cannot be undone.'))return;try{await store.delete(key,true);renderAdmin();}catch{}}
+
+function exportCSV(sessions){
+  const h=['Session ID','Date','Day of Week','New User','Duration (s)','Exchanges','Messages','Business Type','Steps Completed','Paywall Viewed','Payment Completed','Gender','Age','Self-Reported Location','IP City','IP Region','IP Country','Referrer','UTM Source','Research Q1 (B&M Interest)','Research Q2 (Price Range)','User ID'];
+  const rows=sessions.map(s=>[s.id,s.ts?new Date(s.ts).toLocaleString():'',s.dayOfWeek||'',s.isNewUser?'Yes':'No',Math.round((s.durationMs||0)/1000),s.exchanges||0,s.totalMsgs||0,s.checklistType?CL[s.checklistType]?.label||s.checklistType:'',s.stepsCompleted||0,s.paywallViewed?'Yes':'No',s.paymentCompleted?'Yes':'No',s.gender||'',s.age||'',s.locationReported||'',s.city||'',s.region||'',s.country||'',s.referrer||'Direct',s.utmSource||'',s.researchQ1||'',s.researchQ2||'',s.userId||'']);
+  const csv=[h,...rows].map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='vendorpath-analytics-'+new Date().toISOString().slice(0,10)+'.csv';a.click();URL.revokeObjectURL(url);
+}
+
+async function renderAdmin(){
+  const el=document.getElementById('admin-p');
+  if(!adminAuth){el.innerHTML='<div class="admin-auth-wrap"><div class="admin-auth-box"><div class="admin-auth-icon">🔐</div><div class="admin-auth-ttl">Admin Access</div><div class="admin-auth-sub">Enter your admin password to view metrics and submitted questions.</div><input class="admin-auth-in" id="admin-pw-in" type="password" placeholder="Password" onkeydown="if(event.key===\'Enter\')checkAdminPw()"/><div id="admin-pw-err" class="admin-pw-err"></div><button class="admin-auth-btn" onclick="checkAdminPw()">Continue →</button></div></div>';setTimeout(()=>{const i=document.getElementById('admin-pw-in');if(i)i.focus();},50);return;}
+  el.innerHTML='<div class="admin-hdr"><div class="admin-hdr-title">VendorPath Admin Dashboard</div><div class="admin-hdr-btns"><button class="export-btn" id="export-btn" disabled>↓ Export CSV</button><button class="admin-lock" onclick="lockAdmin()">🔒 Lock</button></div></div><div class="admin-subtabs-bar"><div class="admin-sub-tabs"><button class="admin-sub-tab '+(adminSubTab==='overview'?'on':'')+'" onclick="setAdminSubTab(\'overview\')">Overview</button><button class="admin-sub-tab '+(adminSubTab==='sessions'?'on':'')+'" onclick="setAdminSubTab(\'sessions\')">Sessions</button><button class="admin-sub-tab '+(adminSubTab==='questions'?'on':'')+'" onclick="setAdminSubTab(\'questions\')">Questions</button></div></div><div id="admin-content" style="flex:1;overflow-y:auto;padding:14px"><div style="display:flex;align-items:center;justify-content:center;height:60px"><div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div></div>';
+  let sessions=[],users={},fb=[];
+  try{sessions=await loadSessions();}catch{}try{users=await loadUsers();}catch{}try{fb=await loadFeedback();}catch{}
+  const exportBtn=document.getElementById('export-btn');if(exportBtn){exportBtn.disabled=false;exportBtn.onclick=()=>exportCSV(sessions);}
+  const content=document.getElementById('admin-content');if(!content)return;
+  if(adminSubTab==='overview')content.innerHTML=buildAdminOverview(sessions,users);
+  else if(adminSubTab==='sessions')content.innerHTML=buildSessionsList(sessions);
+  else content.innerHTML=buildQuestionsList(fb);
+}
+
+// ── EMAIL / PRINT ──────────────────────────────────────────────────────────
+function buildEmailBody(){if(!activeCL)return'';const cl=CL[activeCL];let t=0,d=0;cl.sections.forEach(s=>s.items.forEach(i=>{t++;if(checks[i.id])d++;}));let b='VendorPath by OpenShop — Vendor Setup Guide\n'+cl.label+' Checklist\nProgress: '+d+'/'+t+' steps completed\n\n';cl.sections.forEach(s=>{b+=s.title+'\n'+'─'.repeat(40)+'\n';s.items.forEach(i=>{const pt=i.text.replace(/<[^>]+>/g,'');b+=(checks[i.id]?'[x]':'[ ]')+' '+pt+'\n';if(notes[i.id])b+='    Note: '+notes[i.id]+'\n';});b+='\n';});b+='Generated by VendorPath\nby OpenShop | Shop the Heights JC\n'+HHS_URL;return b;}
+function openEmailModal(){document.getElementById('modal-wrap').innerHTML='<div class="em-wrap"><div class="em-inner"><div class="em-ttl">Email my checklist</div><div class="em-sub">We\'ll open your mail client with your checklist and current progress.</div><input class="em-in" id="em-in" type="email" placeholder="your@email.com"/><div id="em-msg" class="em-msg" style="display:none"></div><div class="em-acts"><button class="em-cancel" onclick="closeModal()">Cancel</button><button class="em-send" onclick="sendEmail()">Send</button></div></div></div>';}
+function closeModal(){document.getElementById('modal-wrap').innerHTML='';}
+function sendEmail(){const el=document.getElementById('em-in'),email=el?el.value.trim():'';if(!email||!email.includes('@')){const m=document.getElementById('em-msg');if(m){m.textContent='Please enter a valid email.';m.style.display='block';}return;}const cl=CL[activeCL];window.open('mailto:'+email+'?subject='+encodeURIComponent('VendorPath — '+cl.label+' Checklist')+'&body='+encodeURIComponent(buildEmailBody()),'_blank');const m=document.getElementById('em-msg');if(m){m.textContent='Mail client opened!';m.style.display='block';m.style.color='var(--grd)';}setTimeout(closeModal,2500);}
+function printCL(){
+  if(!activeCL)return;const cl=CL[activeCL];let t=0,d=0;cl.sections.forEach(s=>s.items.forEach(i=>{t++;if(checks[i.id])d++;}));const pct=Math.round((d/t)*100);
+  let rows='';cl.sections.forEach(s=>{rows+='<tr><td colspan="2" style="padding:10px 0 4px;font-size:11px;font-weight:600;color:#0F6E56;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid #e5e5e5">'+s.title+'</td></tr>';s.items.forEach(i=>{const c=checks[i.id],n=notes[i.id],pt=i.text.replace(/<[^>]+>/g,'');rows+='<tr><td style="width:22px;padding:7px 8px 7px 0;vertical-align:top"><div style="width:14px;height:14px;border:1.5px solid '+(c?'#1D9E75':'#aaa')+';border-radius:3px;background:'+(c?'#1D9E75':'white')+'">'+(c?'<div style="width:8px;height:4px;border-left:1.5px solid white;border-bottom:1.5px solid white;transform:rotate(-45deg) translateY(-1px);margin:4px 0 0 2px"></div>':'')+'</div></td><td style="padding:7px 0;border-bottom:.5px solid #f0f0f0;font-size:12.5px;color:'+(c?'#999':'#222')+';'+(c?'text-decoration:line-through':'')+'">'+ pt+(n?'<div style="font-size:11px;color:#888;margin-top:3px;font-style:italic">Note: '+n+'</div>':'')+'</td></tr>';});});
+  const win=window.open('','_blank');win.document.write('<!DOCTYPE html><html><head><title>VendorPath Checklist</title><style>body{font-family:system-ui,sans-serif;max-width:600px;margin:32px auto;color:#222;padding:0 20px}h1{font-size:18px;font-weight:600;margin-bottom:2px}.pt{background:#f0f0f0;border-radius:6px;height:8px;overflow:hidden;margin-bottom:4px}.pf{height:100%;background:#1D9E75;border-radius:6px;width:'+pct+'%}.pl{font-size:12px;color:#0F6E56;font-weight:600;margin-bottom:20px}table{width:100%;border-collapse:collapse}.ft{margin-top:28px;font-size:11px;color:#aaa;border-top:.5px solid #eee;padding-top:12px}a{color:#0F6E56}@media print{body{margin:16px}}</style></head><body><h1>VendorPath — Vendor Setup Guide</h1><div class="pt"><div class="pf"></div></div><div class="pl">'+d+' of '+t+' steps completed ('+pct+'%)</div><table>'+rows+'</table><div class="ft">VendorPath by OpenShop | Shop the Heights JC<br>Jersey City Dept. of Health &amp; Human Services · 1 Jackson Square, NJ 07305<br><a href="'+HHS_URL+'">'+HHS_URL+'</a></div><script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>');win.document.close();
+}
+
+// ── TEMP VENDOR FORM ───────────────────────────────────────────────────────
+function openTempVendorForm(){
+  const win=window.open('','_blank');
+  const blank='<div style="border-bottom:1px solid #111;min-height:20px;margin-top:2px"></div>';
+  const ansLine='<div style="border-bottom:1px solid #111;height:20px;margin:4px 0"></div>';
+  win.document.write('<!DOCTYPE html><html><head><title>Application for Temporary Food Vendor — Jersey City HHS</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;max-width:720px;margin:24px auto;padding:0 24px;color:#111;font-size:12px;line-height:1.4}.hdr{text-align:center;border-bottom:2px solid #111;padding-bottom:12px;margin-bottom:16px}.hdr p{font-size:11px;margin:1px 0}.hdr h1{font-size:14px;font-weight:bold;margin:8px 0 2px;text-transform:uppercase;text-decoration:underline}.row{display:flex;gap:20px;margin-bottom:10px}.field{flex:1}.field label{font-size:10px;display:block;margin-bottom:1px}.full{width:100%;margin-bottom:10px}.sec-title{font-weight:bold;font-size:12px;text-decoration:underline;margin:14px 0 8px}.q{margin-bottom:10px}.q-text{margin-bottom:3px}.q-note{font-size:10px;font-style:italic}.sub{margin-left:14px;margin-top:4px}.sub label{font-size:10px}.two-col{display:grid;grid-template-columns:1fr 1fr;gap:4px 20px;margin-top:6px}.cert{border:1px solid #111;padding:8px 10px;font-size:10px;line-height:1.55;margin:14px 0 10px}.sig-row{display:flex;gap:24px;margin-top:12px}.sig-field{flex:1}.sig-field label{font-size:10px;display:block;margin-bottom:1px}.footer{border:1px solid #111;padding:8px 12px;margin-top:16px;font-size:11px;line-height:1.6}.page-div{border-top:2px dashed #bbb;margin:20px 0;padding-top:16px}.tcs{font-size:10px;font-style:italic;margin:10px 0}.pg-note{font-size:10px;color:#888;text-align:center;margin-top:8px}.print-btn{display:block;margin:16px auto;padding:8px 28px;background:#111;color:#fff;border:none;cursor:pointer;font-size:13px;border-radius:4px;font-family:Arial,sans-serif}@media print{.print-btn{display:none}.page-div{border:none;page-break-before:always}}</style></head><body><button class="print-btn" onclick="window.print()">🖨 Print Form</button><div class="hdr"><p>CITY OF JERSEY CITY</p><p>DEPARTMENT OF HEALTH &amp; HUMAN SERVICES / ENVIRONMENTAL HEALTH DIVISION</p><h1>Application for a Temporary Food Vendor</h1></div><div class="row"><div class="field"><label>Event Name:</label>'+blank+'</div><div class="field"><label>Event Location:</label>'+blank+'</div></div><div class="row"><div class="field"><label>Event Coordinator:</label>'+blank+'</div><div class="field"><label>Date(s) of Event:</label>'+blank+'</div></div><div class="full"><label>Vendor Trade Name:</label>'+blank+'</div><div class="full"><label>Name of Vendor Operator:</label>'+blank+'</div><div class="full"><label>Street Address:</label>'+blank+'</div><div class="full"><label>Mailing Address (if different):</label>'+blank+'</div><div class="row"><div class="field"><label>City:</label>'+blank+'</div><div class="field" style="max-width:100px"><label>State:</label>'+blank+'</div></div><div class="row"><div class="field"><label>Phone:</label>'+blank+'</div><div class="field"><label>E-mail address:</label>'+blank+'</div></div><div class="sec-title">Operational Information</div><div class="q"><div class="q-text">1. Where will food be stored and/or prepared prior to the Event?</div><div class="sub"><label>Name of Establishment:</label>'+blank+'<label>Street Address:</label>'+blank+'<div style="display:flex;gap:16px"><div style="flex:1"><label>City:</label>'+blank+'</div><div style="max-width:90px"><label>State:</label>'+blank+'</div></div><div style="font-size:10px;font-style:italic;margin-top:4px">Please attach a copy of the Establishment\'s most recent Sanitary Inspection Report</div></div></div><div class="q"><div class="q-text">2. How will TCS* food temperatures be maintained during transport to the Event? <span class="q-note">(e.g. Refrigerated vehicle, Insulated containers with ice)</span></div>'+ansLine+'</div><div class="q"><div class="q-text">3. Describe how Cold TCS food temperatures will be maintained (41°F or below) during the event? <span class="q-note">(e.g. Refrigerator, Freezer, Insulated containers w/ice packs, Dry ice)</span></div>'+ansLine+'</div><div class="q"><div class="q-text">4. What type(s) of Cooking equipment will be provided? <span class="q-note">e.g. Fryolators, Grill (propane/charcoal), Range, etc.</span></div>'+ansLine+'</div><div class="q"><div class="q-text">5. How will Hot Foods be maintained at 135°F or above? <span class="q-note">(e.g. Steam tables, Warming cabinets)</span></div>'+ansLine+'</div><div class="tcs">*TCS means: "Time-Temperature Controlled for Safety" foods such as meat, poultry, dairy, eggs, and cooked vegetables requiring temperature control to limit pathogen growth.</div><div class="pg-note">1 of 2 — Continue next page</div><div class="page-div"><div class="q"><div class="q-text">6. Describe the handwashing facilities that will be provided:</div>'+ansLine+ansLine+'</div><div class="q"><div class="q-text">7. Describe the equipment washing &amp; sanitizing facilities that will be provided:</div>'+ansLine+ansLine+'</div><div class="q"><div class="q-text">8. List all Food and Beverage items that will be served/sold:</div><div class="two-col">'+Array(10).fill(ansLine).join('')+'</div></div><div class="cert">I hereby certify that the above listed information is correct. I also understand that the home preparation and storage of food used in this temporary food establishment is prohibited. I acknowledge that all TCS* foods will be maintained at required temperatures (cold at or below 41°F; or hot at or above 135°F) during transport to, and throughout the event, and that those TCS foods that are determined to be held out of the required temperatures are considered to be adulterated per N.J.S.A. 24:5-8 and subject to embargo and/or voluntary destruction on site.</div><div class="full"><label>Vendor Applicant\'s Name:</label>'+blank+'</div><div class="sig-row"><div class="sig-field"><label>Title:</label>'+blank+'</div><div class="sig-field"><label>Signature of Vendor Applicant:</label>'+blank+'</div></div><div class="footer"><strong>VENDOR:</strong> Please bring this completed application to the Licensing Office when you come to pay for your permit.<br><br>City of Jersey City · Department of Health &amp; Human Services · Environmental Health Division<br>Dr. Martin Luther King, Jr. City Hall Annex · 1 Jackson Square, Jersey City, NJ 07305<br>(201) 547-6800 / (201) 547-5285</div></div><button class="print-btn" onclick="window.print()">🖨 Print Form</button></body></html>');
+  win.document.close();
+}
+
+// ── CHAT ───────────────────────────────────────────────────────────────────
+const msgsEl=document.getElementById('msgs'),inpEl=document.getElementById('u-inp'),sndBtn=document.getElementById('snd');
+function scrollDn(){msgsEl.scrollTop=msgsEl.scrollHeight;}
+function setBusy(v){busy=v;sndBtn.disabled=v;}
+function showTyping(){const d=document.createElement('div');d.className='msg b';d.id='typing';const t=document.createElement('div');t.className='typing';[0,1,2].forEach(()=>{const dot=document.createElement('div');dot.className='dot';t.appendChild(dot);});d.appendChild(t);msgsEl.appendChild(d);scrollDn();}
+function rmTyping(){const t=document.getElementById('typing');if(t)t.remove();}
+function extractTags(txt){const cl=txt.match(/\[CHECKLIST:([a-z_]+)\]/);const ids=[...txt.matchAll(/\[CHECK:([a-z0-9_]+)\]/g)].map(m=>m[1]);const unk=/\[UNKNOWN\]/.test(txt);const gen=txt.match(/\[GENDER:([a-z_]+)\]/);const age=txt.match(/\[AGE:(\d+)\]/);const loc=txt.match(/\[LOCATION:([^\]]+)\]/);return{clKey:cl?cl[1]:null,checkIds:ids,unknown:unk,gender:gen?gen[1]:null,age:age?parseInt(age[1]):null,location:loc?loc[1].trim():null};}
+
+function fmtBot(raw){
+  const s=raw.replace(/\[CHECKLIST:[a-z_]+\]/g,'').replace(/\[CHECK:[a-z0-9_]+\]/g,'').replace(/\[BUSINESS:[^\]]+\]/g,'').replace(/\[UNKNOWN\]/g,'').replace(/\[GENDER:[a-z_]+\]/g,'').replace(/\[AGE:\d+\]/g,'').replace(/\[LOCATION:[^\]]+\]/g,'').trim();
+  const lines=s.split('\n'),blocks=[];let i=0;
+  while(i<lines.length){const l=lines[i];if(/^#{1,3} /.test(l)){blocks.push({t:'h',tx:l.replace(/^#{1,3} /,'')});i++;continue;}if(/^(\*|-|\d+\.) /.test(l)){const its=[],ord=/^\d+\. /.test(l);while(i<lines.length&&/^(\*|-|\d+\.) /.test(lines[i])){its.push(lines[i].replace(/^(\*|-|\d+\.) /,''));i++;}blocks.push({t:'l',ord,its});continue;}if(l.trim()===''){if(blocks.length&&blocks[blocks.length-1].t!=='blank')blocks.push({t:'blank'});i++;continue;}if(blocks.length&&blocks[blocks.length-1].t==='p')blocks[blocks.length-1].tx+='\n'+l;else blocks.push({t:'p',tx:l});i++;}
+  function inf(t){return t.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\[([^\]]+)\]\(mailto:([^)]+)\)/g,'<a href="mailto:$2">$1</a>').replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g,(m,lb,url)=>'<a href="'+url.replace(/"/g,'%22')+'" target="_blank" rel="noopener">'+lb+'</a>').replace(/(?<![">])(https?:\/\/[^\s<\]"]+)/g,(m,url)=>'<a href="'+url.replace(/"/g,'%22')+'" target="_blank" rel="noopener">'+url+'</a>');}
+  let html='';blocks.forEach(bl=>{if(bl.t==='blank')return;if(bl.t==='h'){html+='<p><strong>'+inf(bl.tx)+'</strong></p>';return;}if(bl.t==='l'){html+='<'+(bl.ord?'ol':'ul')+'>'+bl.its.map(it=>'<li>'+inf(it)+'</li>').join('')+'</'+(bl.ord?'ol':'ul')+'>';return;}if(bl.t==='p')html+='<p>'+bl.tx.split('\n').map(l=>inf(l)).join('<br>')+'</p>';});
+  return html;
+}
+
+function addMsg(txt,sender,chips){const div=document.createElement('div');div.className='msg '+sender;const bub=document.createElement('div');bub.className='bub';bub.innerHTML=sender==='b'?fmtBot(txt):txt.replace(/&/g,'&amp;').replace(/</g,'&lt;');div.appendChild(bub);if(chips&&chips.length){const row=document.createElement('div');row.className='chips';chips.forEach(lbl=>{const btn=document.createElement('button');btn.className='chip';btn.textContent=lbl;btn.onclick=()=>handleSend(lbl);row.appendChild(btn);});div.appendChild(row);}msgsEl.appendChild(div);scrollDn();}
+
+function startOver(){
+  history=[];checks={};notes={};openNotes={};activeCL=null;autoCks=new Set();lastPct=0;
+  try{localStorage.removeItem('os_ctx');}catch(e){}
+  document.getElementById('msgs').innerHTML='';
+  addMsg('Welcome to **VendorPath** 👋\n\nI\'m your personal guide to becoming an approved vendor at a Jersey City farmers market — brought to you by **OpenShop** and **Shop the Heights JC**.\n\nTell me about your business and I\'ll recommend the right markets, identify your vendor type, and build your personalized checklist — with live progress tracking every step of the way.\n\nTo get started — what do you sell, and are you new to farmers markets?','b',["I sell food products","I sell non-food / crafts","Show me all available markets","What permits do I need?"]);
+  renderCL();updateProg(false);
+}{const lastQ=[...history].reverse().find(m=>m.role==='user')?.content||'(unknown)';const conv=history.map(m=>(m.role==='user'?'Vendor':'VendorPath')+': '+m.content).join('\n\n');const body='VendorPath by OpenShop — Unanswered Vendor Question\n\nQuestion: '+lastQ+'\n\nFull Conversation:\n'+'─'.repeat(40)+'\n'+conv+'\n\n'+'─'.repeat(40)+'\nSubmitted via VendorPath by OpenShop | Shop the Heights JC';window.open('mailto:'+FEEDBACK_EMAIL+'?subject='+encodeURIComponent('VendorPath Feedback Submitted')+'&body='+encodeURIComponent(body),'_blank');storeFeedbackQuestion(lastQ);}
+
+const SYS = [
+'You are VendorPath, a friendly and knowledgeable vendor guide by OpenShop, powered by Shop the Heights JC. Help small business owners become approved vendors at Jersey City farmers markets. Tone: warm, encouraging, plain language.',
+'',
+'FORMATTING RULES:',
+'- Bullet points for ALL lists of steps, documents, requirements, or options.',
+'- Numbered lists when sequence matters.',
+'- **bold** for key terms and section labels.',
+'- Blank line between distinct topics.',
+'- Every URL and email MUST be a markdown link.',
+'',
+'GUARDRAIL: Only answer questions based on information you have been provided. If outside scope: say "I don\'t know the answer to that question", briefly note why, add [UNKNOWN] at very end. Do NOT speculate.',
+'',
+'BUSINESS NAME: Ask early if not provided. When captured: [BUSINESS:name] at very end. Only once.',
+'',
+'OPTIONAL DEMOGRAPHICS (ask once after 4+ exchanges AND vendor type identified):',
+'"We want to ensure the best user experience possible, so it\'s helpful to know who is using our tool. If you don\'t mind, could you please share your gender, age, and city/state? If not, feel free to skip this!"',
+'Accept any response. Never ask again. Only tag info actually provided:',
+'- [GENDER:male|female|non-binary|other|prefer_not_to_say]',
+'- [AGE:number]',
+'- [LOCATION:City, State]',
+'',
+'CHECKLIST TAGS (very end only):',
+'- Vendor type: [CHECKLIST:food_general|food_cottage|food_truck|raw_meat|non_food]',
+'- Step confirmed done: [CHECK:item_id]',
+'',
+'CHECKLIST IDs:',
+'FOOD GENERAL: fm1 fm2 fm3|fg_sop fg_vf fd9|fd1-fd8|fg_fire fp1-fp4|fat1-fat3',
+'COTTAGE FOOD: cfm1-cfm3|cfl1-cfl7|cf_sop cf_vf cfp1|cf_fire cfp2-cfp4|cfat1-cfat2',
+'FOOD TRUCK: ftm1-ftm3|ftf1-ftf2|ft_sop ft_vf ftd_mvf ftd12|ftd1-ftd11|ftp1-ftp3|ftat1-ftat2',
+'RAW MEAT: rmm1-rmm3|rm_sop rm_vf rma_app|rmd1-rmd8|rmx1-rmx4|rm_fire rmp1-rmp3|rmat1-rmat2',
+'NON-FOOD: nfm1-nfm3|nf_sop nf_vf|nfr1-nfr4|nfat1-nfat2',
+'',
+'TEMP FOOD VENDOR APPLICATION: Downloadable from the VendorPath checklist. Key sections: event info, vendor info, 8 operational questions (food storage/prep location, TCS temp control during transport and at event, cooking equipment, hot food holding, handwashing, sanitizing, food/beverage list). Vendor must sign and certify. Home food prep is prohibited.',
+'',
+'MOBILE VENDOR FORMS PDF: [JC Mobile Food Vendor Information Packet]('+MVF_PDF+')',
+'Share for: Food Truck/Trailer/Pushcart Application, Type 1 ($125), Type 1-A ($25), Open Flame ($125) permits, Frozen Dairy, Agricultural Truck, Flavored Ice forms.',
+'',
+'JC ENVIRONMENTAL HEALTH ANNUAL LICENSE FEES: [Fee Schedule]('+LIC_PDF+')',
+'- Class A Food Truck/Trailer: $840/year',
+'- Class B Pushcart/Frozen Dairy/Ag Truck: $600/year',
+'- Class C Flavored Ice: $250/year',
+'- Farmers Market Vendor 1-2 locations: $200/year (no alcohol), $400 (with alcohol)',
+'- Farmers Market Vendor 3+ locations: $500/year (no alcohol), $1,000 (with alcohol)',
+'',
+'FIRE PREVENTION PERMITS: (201) 547-4255',
+'- Type 1 ($125): cooking inside truck with grease-laden vapors',
+'- Type 1-A ($25): flammable gas tanks',
+'- Open Flame ($125): freestanding grill outside truck',
+'- JC Fire Dept does NOT issue permits for Liberty State Park, Lincoln Park, or Washington Park — contact event organizer for those.',
+'',
+'FOOD TRUCK INSURANCE: $1,000,000 minimum (not $500K).',
+'',
+'EXEMPTIONS — no Temp Food Vendor Permit needed for:',
+'- Vendors with a brick-and-mortar in JC with a valid current JC HHS license',
+'- Vendors NOT selling products for human consumption',
+'',
+'PERMIT DISTINCTION: Temp Food Vendor Permit is SEPARATE from Commercial Kitchen License AND annual Mobile Food Vendor License.',
+'',
+'TYPE 1 PERMIT: Any food or tent vendor using grill, oven, fryer, flat iron, or electrical grill AND propane, charcoal, wood, or sternos must obtain a Type 1 Permit — (201) 547-4255. Share the [forms PDF]('+MVF_PDF+').',
+'',
+'REQUIRED FORMS (all vendor types after market approval):',
+'1. Standard Operating Procedure Agreement — [online form](https://www.cognitoforms.com/CityOfJerseyCity1/VendorsStandardOperatingProcedures)',
+'2. VENDOR FORM — [online form](https://www.cognitoforms.com/CityOfJerseyCity1/VENDORFORM) — enter 1-2 tables; farm vendors enter peak count.',
+'',
+'PERMIT LOGISTICS: All docs printed, brought in person. No day-of permits. Can send a representative. Cash/debit/credit only.',
+'',
+'JC HHS: [Jersey City Health & Human Services](https://www.jerseycitynj.gov/cityhall/health) | 1 Jackson Square, Jersey City, NJ 07305 | (201) 547-6800',
+'Contacts: Jose Vargas [jvargas@jcnj.org](mailto:jvargas@jcnj.org) | Morgan Spann [mspann@jcnj.org](mailto:mspann@jcnj.org) | Offer Cohen [Ocohen@jcnj.org](mailto:Ocohen@jcnj.org)',
+'',
+'PERMIT FEES: 1-3 days $25 | 4-5 days $50 | 6-7 days $75 | 8+ days $150 | Licensed JC establishment: free',
+'',
+'MARKETS:',
+'1. Historic Downtown JC Farmers Market — [jcdowntown.org](https://jcdowntown.org/event/farmers-market/) | Year-round Mon+Thu, Grove St PATH Plaza | $125/day',
+'2. Riverview Farmers Market — [riverviewfarmersmarket.org](https://www.riverviewfarmersmarket.org) | May-Nov, Sundays 10am-2pm | $50-$65/day. Free Yoga in the Park 9-10am June-Oct; first Sunday = free Qi Gong.',
+'3. Lincoln Park Farmers Market — [jcwsca.org](https://www.jcwsca.org/farmers-market/) | June-Oct, Sundays 10am-2pm | $30/table',
+'4. Hamilton Park Farmers Market — [hpnajc.org](https://www.hpnajc.org/Farmers-Market)',
+'5. Van Vorst Park Farmers Market — Year-round Saturdays 9am-2pm',
+'6. Paulus Hook Farmers Market — Apr-Dec Saturdays 10am-4pm',
+'7. Journal Square Farmers Market — Tuesdays 3-8pm May-Nov',
+'8. Coles Street Market — [colesstreetmarket.com](https://colesstreetmarket.com/) | April-Nov, Tuesdays 3-7pm | ~10 vendors, hyper-local',
+'9. Leonard Gordon Farm Stand — June-Nov Saturdays 8am-3pm',
+'',
+'COTTAGE FOOD: [nj.gov/health/cottagefood/apply-renew](https://www.nj.gov/health/cottagefood/apply-renew/) | $100 fee',
+'',
+'CHECKLIST UPSELL: After identifying vendor type and giving market recs, say: "Your personalized checklist has the complete step-by-step plan — check the Checklist tab!"',
+'',
+'BEHAVIOR: Ask about vendor\'s business and goals before recommending markets. All tags at very end.'
+].join('\n');
+
+async function callAPI(msg){
+  history.push({role:'user',content:msg});setBusy(true);showTyping();
+  try{
+    const res=await fetch(API_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:SYS,messages:history})});
+    const data=await res.json();rmTyping();
+    const reply=data.content?.map(b=>b.type==='text'?b.text:'').join('')||"I'm sorry, I had trouble responding. Please try again.";
+    history.push({role:'assistant',content:reply});
+    const{clKey,checkIds,unknown,gender,age,location}=extractTags(reply);
+    const isFirstCL=clKey&&!sessionData.checklistType;
+    if(clKey&&CL[clKey]){activeCL=clKey;lastPct=0;sessionData.checklistType=clKey;}
+    if(checkIds.length>0)autoCheck(checkIds);
+    if(gender&&!sessionData.gender){sessionData.gender=gender;demographicsAsked=true;}
+    if(age&&!sessionData.age){sessionData.age=age;demographicsAsked=true;}
+    if(location&&!sessionData.locationReported){sessionData.locationReported=location;demographicsAsked=true;}
+    sessionData.exchanges++;sessionData.totalMsgs=history.filter(m=>m.role==='user').length;
+    updateStoredSession();saveChatContext();addMsg(reply,'b');
+
+    // Surface research question naturally after meaningful engagement
+    if(!researchAsked&&sessionData.exchanges>=5&&sessionData.checklistType&&sessionData.stepsCompleted>=1){
+      researchAsked=true;researchState='asked';
+      setTimeout(()=>{
+        addMsg("One more thing before I let you go — we're always working to improve VendorPath and thinking about what to build next.\n\n**Thinking about what's next for your business...**\n\nIf opening a storefront, studio, commercial kitchen, or other brick-and-mortar location were ever part of your plans, would you pay for a service that gave you personalized, step-by-step guidance through everything required to open — all in one place?",'b',
+          ["Yes, definitely","Probably, depending on the price","Maybe — I'd need to know more","No, I'd expect this to be free","A brick-and-mortar location isn't in my plans"]);
+      },800);
+    }
+    if(isFirstCL){
+      pulseChecklistTab();
+      setTimeout(()=>{const nudge=document.createElement('div');nudge.className='msg b';const card=document.createElement('div');card.className='cl-nudge';card.onclick=()=>switchTab('cl');card.innerHTML='<div class="cl-nudge-icon">✅</div><div class="cl-nudge-text"><strong>Your checklist is ready!</strong>Tap "My Checklist" above to see your personalized step-by-step plan.</div><div class="cl-nudge-arr">→</div>';nudge.appendChild(card);msgsEl.appendChild(nudge);scrollDn();},600);
+    }
+    if(unknown){pendingFeedback=true;setTimeout(()=>addMsg("Would you like to submit this question to the VendorPath team? We'll review it to help improve the tool.",'b',["Yes, submit question","No thanks"]),300);}
+    if(checkIds.length>0||clKey)updateProg(true);
+  }catch(e){rmTyping();addMsg("Sorry, I ran into a connection issue. Please try again in a moment.",'b');}
+  setBusy(false);
+}
+
+function handleSend(txt){
+  const msg=(txt||inpEl.value).trim();if(!msg||busy)return;
+  inpEl.value='';inpEl.style.height='auto';
+  if(researchState==='asked'){
+    researchState=(msg==="Yes, definitely"||msg==="Probably, depending on the price")?'q2':'done';
+    sessionData.researchQ1=msg;updateStoredSession();
+    addMsg(msg,'u');
+    if(researchState==='q2'){
+      setTimeout(()=>{
+        addMsg("That's really helpful — thank you! One follow-up:\n\n**What is the most you'd be willing to pay for a service that gives you a personalized step-by-step guide to navigate opening a physical storefront?**",'b',
+          ["$25–$50 per month","$50–$75 per month","$75–$100 per month","$100+ per month","I would only use it if it were free"]);
+      },400);
+    } else {
+      setTimeout(()=>addMsg("Thank you so much for sharing — that's genuinely helpful feedback for our team. Wishing you all the best as you move forward with your vendor journey! 🌱",'b'),400);
+    }
+    return;
+  }
+  if(researchState==='q2'){
+    researchState='done';
+    sessionData.researchQ2=msg;updateStoredSession();
+    addMsg(msg,'u');
+    setTimeout(()=>addMsg("Thank you so much! That's exactly the kind of insight we need. We really appreciate you taking the time — now back to your vendor journey! Is there anything else I can help you with? 😊",'b'),400);
+    return;
+  }
+  if(pendingFeedback){pendingFeedback=false;addMsg(msg,'u');if(msg==="Yes, submit question"){sendFeedbackEmail();addMsg("Thank you! Your question has been sent to the VendorPath team at shoptheheightsjc@gmail.com. We'll review it and look to update the tool soon.",'b');}else addMsg("No problem — feel free to ask anything else!",'b');return;}
+  addMsg(msg,'u');callAPI(msg);
+}
+sndBtn.onclick=()=>handleSend();
+inpEl.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();handleSend();}});
+inpEl.addEventListener('input',()=>{inpEl.style.height='auto';inpEl.style.height=Math.min(inpEl.scrollHeight,80)+'px';});
+
+// ── INIT ───────────────────────────────────────────────────────────────────
+window.addEventListener('message',e=>{if(e.data==='OPENSHOP_UNLOCK'&&!isUnlocked){unlockAccess();}});
+const hasCtx=loadChatContext();
+const clLabel=activeCL?CL[activeCL]?.label:null;
+const returningPaid=isUnlocked&&!justPaid;
+const welcomeMsg=justPaid
+  ?(hasCtx&&clLabel
+    ?'🎉 You\'re in! Welcome to **VendorPath** — full access unlocked.\n\nI remember you were working toward becoming a **'+clLabel+'** — your complete checklist is ready in the **My Checklist** tab, right where you left off.\n\n**Good news:** as long as you return to this tool on the same browser and device, you won\'t have to pay again.\n\nAnything else I can help you with?'
+    :'🎉 You\'re in! Welcome to **VendorPath** — full access unlocked.\n\nYour complete vendor launch plan is ready in the **My Checklist** tab. Every step, every form link, and your full progress tracker are all there.\n\n**Good news:** as long as you return to this tool on the same browser and device, you won\'t have to pay again.\n\nNow let\'s get to work — what do you sell, and are you new to farmers markets?')
+  :returningPaid
+  ?(hasCtx&&clLabel
+    ?'Welcome back to **VendorPath**! 👋 Great to see you again.\n\nI remember you were working toward becoming a **'+clLabel+'**. Your checklist and conversation context are right where you left them — head to the **My Checklist** tab to continue.\n\n**Reminder:** as long as you return using the same browser and device, you\'ll always have full access without paying again.\n\nIs there anything I can help you with today?'
+    :'Welcome back to **VendorPath**! 👋 Great to see you again.\n\nYou have full access to your complete vendor launch plan. Head to the **My Checklist** tab to pick up where you left off.\n\n**Reminder:** as long as you return to this tool using the same browser and device, you\'ll always have full access without paying again.\n\nIs there anything I can help you with today?')
+  :(hasCtx
+    ?'Welcome back to **VendorPath**! 👋\n\nI still have our previous conversation on file — just continue where you left off or ask me something new.\n\nWhat can I help you with today?'
+    :'Welcome to **VendorPath** 👋\n\nI\'m your personal guide to becoming an approved vendor at a Jersey City farmers market — brought to you by **OpenShop** and **Shop the Heights JC**.\n\nTell me about your business and I\'ll recommend the right markets, identify your vendor type, and build your personalized checklist — with live progress tracking every step of the way.\n\nTo get started — what do you sell, and are you new to farmers markets?');
+const welcomeChips=(returningPaid||hasCtx)?["Continue my checklist","Show me all markets","I have a question"]:["I sell food products","I sell non-food / crafts","Show me all available markets","What permits do I need?"];
+
+// Add Start Over button for returning users
+if(returningPaid||hasCtx){
+  setTimeout(()=>{
+    const div=document.createElement('div');div.className='msg b';
+    const btn=document.createElement('button');
+    btn.style.cssText='background:var(--gr);color:#fff;border:none;border-radius:var(--r);padding:8px 16px;font-size:12.5px;font-weight:600;font-family:var(--f);cursor:pointer;margin-top:4px;';
+    btn.textContent='↺ Start Over';
+    btn.onmouseenter=()=>btn.style.background='var(--grd)';
+    btn.onmouseleave=()=>btn.style.background='var(--gr)';
+    btn.onclick=startOver;
+    div.appendChild(btn);
+    msgsEl.appendChild(div);scrollDn();
+  },350);
+}
+initSession();
+getGeoLocation();
+setTimeout(()=>{addMsg(welcomeMsg,'b',welcomeChips);},300);
+</script>
+</body>
+</html>
