@@ -1,9 +1,16 @@
-export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).end();
+const handler = async (req, res) => {
+  if (req.method !== 'POST') {
+    res.status(405).end();
+    return;
+  }
 
-  // Debug: confirm the key is being read
   const key = process.env.ANTHROPIC_API_KEY;
-  console.log('Key present:', !!key, '| Key prefix:', key ? key.slice(0, 10) : 'MISSING');
+
+  // Return key status so we can debug in the browser
+  if (!key) {
+    res.status(500).json({ error: 'ANTHROPIC_API_KEY is not set', key_present: false });
+    return;
+  }
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -16,15 +23,25 @@ export default async function handler(req, res) {
       body: JSON.stringify(req.body)
     });
 
-    // Debug: log what Anthropic actually returned
     const text = await response.text();
-    console.log('Anthropic status:', response.status);
-    console.log('Anthropic response:', text.slice(0, 300));
+
+    // Return full debug info if not OK
+    if (!response.ok) {
+      res.status(response.status).json({
+        error: 'Anthropic API error',
+        status: response.status,
+        body: text.slice(0, 500),
+        key_prefix: key.slice(0, 12)
+      });
+      return;
+    }
 
     const data = JSON.parse(text);
-    res.status(response.status).json(data);
+    res.status(200).json(data);
+
   } catch(e) {
-    console.error('Error:', e.message);
     res.status(500).json({ error: e.message });
   }
-}
+};
+
+module.exports = handler;
